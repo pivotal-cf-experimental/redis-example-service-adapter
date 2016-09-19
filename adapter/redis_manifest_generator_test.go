@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/pivotal-cf-experimental/redis-example-service-adapter/adapter"
-	"github.com/pivotal-cf/on-demand-service-broker-sdk/bosh"
-	"github.com/pivotal-cf/on-demand-service-broker-sdk/serviceadapter"
+	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
+	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

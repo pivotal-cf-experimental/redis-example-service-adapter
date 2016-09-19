@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pivotal-cf/on-demand-service-broker-sdk/bosh"
+	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"gopkg.in/yaml.v2"
 )
 
@@ -28,7 +28,7 @@ func HandleCommandLineInvocation(args []string, manifestGenerator ManifestGenera
 			previousPlanJSON := args[6]
 			handler.generateManifest(serviceDeploymentJSON, planJSON, argsJSON, previousManifestYAML, previousPlanJSON)
 		} else {
-			failWithCode(10, "manifest generator not implemented")
+			failWithCode(NotImplementedExitCode, "manifest generator not implemented")
 		}
 
 	case "create-binding":
@@ -36,10 +36,10 @@ func HandleCommandLineInvocation(args []string, manifestGenerator ManifestGenera
 			bindingID := args[2]
 			boshVMsJSON := args[3]
 			manifestYAML := args[4]
-			bindingArbitraryParams := args[5]
-			handler.createBinding(bindingID, boshVMsJSON, manifestYAML, bindingArbitraryParams)
+			reqParams := args[5]
+			handler.createBinding(bindingID, boshVMsJSON, manifestYAML, reqParams)
 		} else {
-			failWithCode(10, "binder not implemented")
+			failWithCode(NotImplementedExitCode, "binder not implemented")
 		}
 	case "delete-binding":
 		if handler.binder != nil {
@@ -49,7 +49,7 @@ func HandleCommandLineInvocation(args []string, manifestGenerator ManifestGenera
 			unbindingRequestParams := args[5]
 			handler.deleteBinding(bindingID, boshVMsJSON, manifestYAML, unbindingRequestParams)
 		} else {
-			failWithCode(10, "binder not implemented")
+			failWithCode(NotImplementedExitCode, "binder not implemented")
 		}
 	case "dashboard-url":
 		if dashboardUrlGenerator != nil {
@@ -58,7 +58,7 @@ func HandleCommandLineInvocation(args []string, manifestGenerator ManifestGenera
 			manifestYAML := args[4]
 			handler.dashboardUrl(instanceID, planJSON, manifestYAML)
 		} else {
-			failWithCode(10, "dashboard-url not implemented")
+			failWithCode(NotImplementedExitCode, "dashboard-url not implemented")
 		}
 	default:
 		fail("unknown subcommand: %s", args[1])
@@ -86,7 +86,7 @@ func (p commandLineHandler) generateManifest(serviceDeploymentJSON, planJSON, ar
 
 	manifest, err := p.manifestGenerator.GenerateManifest(serviceDeployment, plan, requestParams, previousManifest, previousPlan)
 	if err != nil {
-		failWithCodeAndNotifyUser(1, err.Error())
+		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
 	}
 
 	manifestBytes, err := yaml.Marshal(manifest)
@@ -104,17 +104,17 @@ func (p commandLineHandler) createBinding(bindingID, boshVMsJSON, manifestYAML, 
 	var manifest bosh.BoshManifest
 	p.must(yaml.Unmarshal([]byte(manifestYAML), &manifest), "unmarshalling manifest")
 
-	var params map[string]interface{}
-	p.must(json.Unmarshal([]byte(requestParams), &params), "unmarshalling request binding parameters")
+	var reqParams map[string]interface{}
+	p.must(json.Unmarshal([]byte(requestParams), &reqParams), "unmarshalling request binding parameters")
 
-	binding, err := p.binder.CreateBinding(bindingID, boshVMs, manifest, params)
+	binding, err := p.binder.CreateBinding(bindingID, boshVMs, manifest, reqParams)
 	switch err := err.(type) {
 	case BindingAlreadyExistsError:
-		failWithCodeAndNotifyUser(49, err.Error())
+		failWithCodeAndNotifyUser(BindingAlreadyExistsErrorExitCode, err.Error())
 	case AppGuidNotProvidedError:
-		failWithCodeAndNotifyUser(42, err.Error())
+		failWithCodeAndNotifyUser(AppGuidNotProvidedErrorExitCode, err.Error())
 	case error:
-		failWithCodeAndNotifyUser(1, err.Error())
+		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
 	default:
 		break
 	}
@@ -133,8 +133,11 @@ func (p commandLineHandler) deleteBinding(bindingID, boshVMsJSON, manifestYAML s
 	p.must(json.Unmarshal([]byte(requestParams), &params), "unmarshalling request binding parameters")
 
 	err := p.binder.DeleteBinding(bindingID, boshVMs, manifest, params)
-	if err != nil {
-		failWithCodeAndNotifyUser(1, err.Error())
+	switch err.(type) {
+	case BindingNotFoundError:
+		failWithCodeAndNotifyUser(BindingNotFoundErrorExitCode, err.Error())
+	case error:
+		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
 	}
 }
 
@@ -148,7 +151,7 @@ func (p commandLineHandler) dashboardUrl(instanceID, planJSON, manifestYAML stri
 
 	dashboardUrl, err := p.dashboardURLGenerator.DashboardUrl(instanceID, plan, manifest)
 	if err != nil {
-		failWithCodeAndNotifyUser(1, err.Error())
+		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
 	}
 
 	p.must(json.NewEncoder(os.Stdout).Encode(dashboardUrl), "marshalling dashboardUrl")
@@ -164,7 +167,7 @@ func (p commandLineHandler) mustNot(err error, msg string) {
 }
 
 func fail(format string, params ...interface{}) {
-	failWithCode(1, format, params...)
+	failWithCode(ErrorExitCode, format, params...)
 }
 
 func failWithCode(code int, format string, params ...interface{}) {

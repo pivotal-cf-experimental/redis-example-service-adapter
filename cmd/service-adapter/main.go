@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/pivotal-cf-experimental/redis-example-service-adapter/adapter"
-	"github.com/pivotal-cf/on-demand-service-broker-sdk/serviceadapter"
+	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
 
 func main() {

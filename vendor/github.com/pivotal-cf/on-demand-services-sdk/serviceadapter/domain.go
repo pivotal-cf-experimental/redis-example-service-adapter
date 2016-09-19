@@ -3,7 +3,7 @@ package serviceadapter
 import (
 	"errors"
 
-	"github.com/pivotal-cf/on-demand-service-broker-sdk/bosh"
+	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 
 	"gopkg.in/go-playground/validator.v8"
 )
@@ -25,10 +25,21 @@ type DashboardUrl struct {
 	DashboardUrl string `json:"dashboard_url"`
 }
 
+const (
+	ErrorExitCode                     = 1
+	NotImplementedExitCode            = 10
+	BindingNotFoundErrorExitCode      = 41
+	AppGuidNotProvidedErrorExitCode   = 42
+	BindingAlreadyExistsErrorExitCode = 49
+)
+
 type BindingAlreadyExistsError struct {
 }
 
 type AppGuidNotProvidedError struct {
+}
+
+type BindingNotFoundError struct {
 }
 
 func (BindingAlreadyExistsError) Error() string {
@@ -39,12 +50,20 @@ func (AppGuidNotProvidedError) Error() string {
 	return ""
 }
 
+func (BindingNotFoundError) Error() string {
+	return ""
+}
+
 func NewBindingAlreadyExistsError() BindingAlreadyExistsError {
 	return BindingAlreadyExistsError{}
 }
 
 func NewAppGuidNotProvidedError() AppGuidNotProvidedError {
 	return AppGuidNotProvidedError{}
+}
+
+func NewBindingNotFoundError() BindingNotFoundError {
+	return BindingNotFoundError{}
 }
 
 type RequestParameters map[string]interface{}
