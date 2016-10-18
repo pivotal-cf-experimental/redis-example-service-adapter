@@ -153,13 +153,13 @@
 		},
 		{
 			"ImportPath": "github.com/pivotal-cf/on-demand-services-sdk/bosh",
-			"Comment": "v0.10.0-11-g65e86c2",
-			"Rev": "65e86c2e6c2e8d0b6521a4f0298ac71d101565f9"
+			"Comment": "v0.10.1-1-gb7004f7",
+			"Rev": "b7004f7fbb5426aab1e7aad836ab87e199e3d57a"
 		},
 		{
 			"ImportPath": "github.com/pivotal-cf/on-demand-services-sdk/serviceadapter",
-			"Comment": "v0.10.0-11-g65e86c2",
-			"Rev": "65e86c2e6c2e8d0b6521a4f0298ac71d101565f9"
+			"Comment": "v0.10.1-1-gb7004f7",
+			"Rev": "b7004f7fbb5426aab1e7aad836ab87e199e3d57a"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
