@@ -57,6 +57,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				{
 					Name:               "redis-server",
 					VMType:             "some-vm",
+					VMExtensions:       []string{"extensions"},
 					PersistentDiskType: "some-disk",
 					Networks:           []string{"some-network"},
 					Instances:          45,
@@ -150,6 +151,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				))
 
 				Expect(generated.InstanceGroups[0].VMType).To(Equal("some-vm"))
+				Expect(generated.InstanceGroups[0].VMExtensions).To(ConsistOf("extensions"))
 				Expect(generated.InstanceGroups[0].PersistentDiskType).To(Equal("some-disk"))
 				Expect(generated.InstanceGroups[0].Networks).To(ConsistOf(bosh.Network{Name: "some-network"}))
 				Expect(generated.InstanceGroups[0].AZs).To(ConsistOf("some-az1", "some-az2"))

@@ -96,6 +96,7 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 				Instances:          redisServerInstanceGroup.Instances,
 				Jobs:               jobs,
 				VMType:             redisServerInstanceGroup.VMType,
+				VMExtensions:       redisServerInstanceGroup.VMExtensions,
 				PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
 				Stemcell:           stemcellAlias,
 				Networks:           networks,
