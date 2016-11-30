@@ -188,6 +188,36 @@ var _ = Describe("Redis Service Adapter", func() {
 			})
 		})
 
+		Context("when config_server is enabled", func() {
+			BeforeEach(func() {
+				plan.Properties["config_server_manifest"] = true
+			})
+
+			It("returns no error", func() {
+				Expect(generateErr).NotTo(HaveOccurred())
+			})
+
+			It("sets the redis password manifest property as a config server token", func() {
+				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+				Expect(instanceGroupRedisProperties["password"]).To(Equal("((redis-server-password))"))
+			})
+		})
+
+		Context("when config_server is disabled", func() {
+			BeforeEach(func() {
+				plan.Properties["config_server_manifest"] = false
+			})
+
+			It("returns no error", func() {
+				Expect(generateErr).NotTo(HaveOccurred())
+			})
+
+			It("sets the redis password manifest property as a config server token", func() {
+				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+				Expect(instanceGroupRedisProperties["password"]).To(Equal("really random password"))
+			})
+		})
+
 		Context("when maxclients is set in arbitrary parameters", func() {
 			BeforeEach(func() {
 				requestParams = map[string]interface{}{

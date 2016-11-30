@@ -234,10 +234,14 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 	if err != nil {
 		return nil, err
 	}
-	password, err := passwordForRedisServer(previousRedisProperties)
+
+	configServerEnabled := configServerEnabled(planProperties)
+
+	password, err := passwordForRedisServer(previousRedisProperties, configServerEnabled)
 	if err != nil {
 		return nil, err
 	}
+
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
 	return map[string]interface{}{
@@ -249,10 +253,26 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 	}, nil
 }
 
-func passwordForRedisServer(previousManifestProperties map[interface{}]interface{}) (string, error) {
+func configServerEnabled(planProperties serviceadapter.Properties) bool {
+	configServerEnabled := false
+
+	property, found := planProperties["config_server_manifest"]
+	if found {
+		configServerEnabled = property.(bool)
+	}
+
+	return configServerEnabled
+}
+
+func passwordForRedisServer(previousManifestProperties map[interface{}]interface{}, configServerEnabled bool) (string, error) {
 	if previousManifestProperties != nil {
 		return previousManifestProperties["password"].(string), nil
 	}
+
+	if configServerEnabled {
+		return "((redis-server-password))", nil
+	}
+
 	return CurrentPasswordGenerator()
 }
 
