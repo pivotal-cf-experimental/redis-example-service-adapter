@@ -56,12 +56,21 @@ var _ = Describe("Redis Service Adapter", func() {
 			InstanceGroups: []serviceadapter.InstanceGroup{
 				{
 					Name:               "redis-server",
-					VMType:             "some-vm",
-					VMExtensions:       []string{"extensions"},
-					PersistentDiskType: "some-disk",
-					Networks:           []string{"some-network"},
+					VMType:             "dedicated-vm",
+					VMExtensions:       []string{"dedicated-extensions"},
+					PersistentDiskType: "dedicated-disk",
+					Networks:           []string{"dedicated-network"},
 					Instances:          45,
-					AZs:                []string{"some-az1", "some-az2"},
+					AZs:                []string{"dedicated-az1", "dedicated-az2"},
+				},
+				{
+					Name:         "health-check",
+					VMType:       "health-check-vm",
+					Lifecycle:    adapter.LifecycleErrandType,
+					VMExtensions: []string{"health-check-extensions"},
+					Networks:     []string{"health-check-network"},
+					Instances:    1,
+					AZs:          []string{"health-check-az1"},
 				},
 			},
 			Update: &serviceadapter.Update{
@@ -70,7 +79,8 @@ var _ = Describe("Redis Service Adapter", func() {
 				UpdateWatchTime: "100-200",
 				MaxInFlight:     5,
 				Serial:          nil,
-			}}
+			},
+		}
 
 		highMemoryPlan = serviceadapter.Plan{
 			Properties: map[string]interface{}{
@@ -78,18 +88,19 @@ var _ = Describe("Redis Service Adapter", func() {
 			},
 			InstanceGroups: []serviceadapter.InstanceGroup{
 				{
-					Name:      "redis-server",
-					VMType:    "vm-type",
-					Networks:  []string{"networks"},
-					Instances: 42,
-					AZs:       []string{"some-az1", "some-az2"},
+					Name:               "redis-server",
+					VMType:             "high-memory-vm",
+					PersistentDiskType: "high-memory-disk",
+					Networks:           []string{"high-memory-network"},
+					Instances:          42,
+					AZs:                []string{"high-memory-az1", "high-memory-az2"},
 				},
 			},
 		}
 
 		plan = dedicatedPlan
 		serviceReleases = serviceadapter.ServiceReleases{
-			{Name: "some-release-name", Version: "4", Jobs: []string{adapter.RedisServerJobName}},
+			{Name: "some-release-name", Version: "4", Jobs: []string{adapter.RedisServerJobName, adapter.HealthCheckErrandName}},
 		}
 
 		stderr = gbytes.NewBuffer()
@@ -131,31 +142,65 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generateErr).NotTo(HaveOccurred())
 		})
 
-		Describe("the generated manifest", func() {
-			// TODO split up further, wrap in describe block?
-			It("generates redis manifest", func() {
+		Describe("dedicated plan", func() {
+			It("has the deployment name", func() {
 				Expect(generated.Name).To(Equal("some-instance-id"))
+			})
+
+			It("has the service release", func() {
 				Expect(generated.Releases).To(ConsistOf(
 					bosh.Release{Name: "some-release-name", Version: "4"},
 				))
+			})
+
+			It("has the service stemcell", func() {
 				Expect(generated.Stemcells).To(HaveLen(1))
 				Expect(generated.Stemcells[0].OS).To(Equal("some-stemcell-os"))
 				Expect(generated.Stemcells[0].Version).To(Equal("1234"))
+			})
 
-				Expect(generated.InstanceGroups).To(HaveLen(1))
+			It("has two instance groups", func() {
+				Expect(generated.InstanceGroups).To(HaveLen(2))
+			})
+
+			It("has a redis-server instance group", func() {
 				Expect(generated.InstanceGroups[0].Name).To(Equal("redis-server"))
 				Expect(generated.InstanceGroups[0].Instances).To(Equal(45))
+				Expect(generated.InstanceGroups[0].Lifecycle).To(BeEmpty())
 
 				Expect(generated.InstanceGroups[0].Jobs).To(ConsistOf(
 					bosh.Job{Name: adapter.RedisServerJobName, Release: "some-release-name"},
 				))
 
-				Expect(generated.InstanceGroups[0].VMType).To(Equal("some-vm"))
-				Expect(generated.InstanceGroups[0].VMExtensions).To(ConsistOf("extensions"))
-				Expect(generated.InstanceGroups[0].PersistentDiskType).To(Equal("some-disk"))
-				Expect(generated.InstanceGroups[0].Networks).To(ConsistOf(bosh.Network{Name: "some-network"}))
-				Expect(generated.InstanceGroups[0].AZs).To(ConsistOf("some-az1", "some-az2"))
+				Expect(generated.InstanceGroups[0].VMType).To(Equal("dedicated-vm"))
+				Expect(generated.InstanceGroups[0].VMExtensions).To(ConsistOf("dedicated-extensions"))
+				Expect(generated.InstanceGroups[0].PersistentDiskType).To(Equal("dedicated-disk"))
+				Expect(generated.InstanceGroups[0].Networks).To(ConsistOf(bosh.Network{Name: "dedicated-network"}))
+				Expect(generated.InstanceGroups[0].AZs).To(ConsistOf("dedicated-az1", "dedicated-az2"))
+			})
 
+			It("has properties for redis-server", func() {
+				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+				Expect(instanceGroupRedisProperties["password"]).To(Equal("really random password"))
+				Expect(instanceGroupRedisProperties["persistence"]).To(Equal("yes"))
+				Expect(instanceGroupRedisProperties["maxclients"]).To(Equal(10000))
+			})
+
+			It("has a health-check errand", func() {
+				Expect(generated.InstanceGroups[1].Name).To(Equal("health-check"))
+				Expect(generated.InstanceGroups[1].Instances).To(Equal(1))
+				Expect(generated.InstanceGroups[1].Jobs).To(ConsistOf(
+					bosh.Job{Name: "health-check", Release: "some-release-name"},
+				))
+				Expect(generated.InstanceGroups[1].Lifecycle).To(Equal(adapter.LifecycleErrandType))
+				Expect(generated.InstanceGroups[1].VMType).To(Equal("health-check-vm"))
+				Expect(generated.InstanceGroups[1].VMExtensions).To(ConsistOf("health-check-extensions"))
+				Expect(generated.InstanceGroups[1].PersistentDiskType).To(BeEmpty())
+				Expect(generated.InstanceGroups[1].Networks).To(ConsistOf(bosh.Network{Name: "health-check-network"}))
+				Expect(generated.InstanceGroups[1].AZs).To(ConsistOf("health-check-az1"))
+			})
+
+			It("has an update block", func() {
 				Expect(generated.Update).To(Equal(bosh.Update{
 					Canaries:        1,
 					CanaryWatchTime: "100-200",
@@ -163,22 +208,18 @@ var _ = Describe("Redis Service Adapter", func() {
 					MaxInFlight:     5,
 					Serial:          nil,
 				}))
+			})
 
-				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
-				Expect(instanceGroupRedisProperties["password"]).To(Equal("really random password"))
-				Expect(instanceGroupRedisProperties["persistence"]).To(Equal("yes"))
-				Expect(instanceGroupRedisProperties["maxclients"]).To(Equal(10000))
+			It("returns no error", func() {
+				Expect(generateErr).NotTo(HaveOccurred())
 			})
 		})
 
-		It("returns no error", func() {
-			Expect(generateErr).NotTo(HaveOccurred())
-		})
-
-		Context("high memory plan", func() {
+		Describe("high memory plan", func() {
 			BeforeEach(func() {
 				plan = highMemoryPlan
 			})
+
 			It("returns no error", func() {
 				Expect(generateErr).NotTo(HaveOccurred())
 			})
@@ -245,6 +286,19 @@ var _ = Describe("Redis Service Adapter", func() {
 			})
 		})
 
+		Context("when the health-check job is missing from the service releases", func() {
+			BeforeEach(func() {
+				serviceReleases = serviceadapter.ServiceReleases{
+					{Name: "some-release-name", Version: "4", Jobs: []string{adapter.RedisServerJobName}},
+				}
+			})
+
+			It("returns an error", func() {
+				Expect(generateErr).To(HaveOccurred())
+				Expect(generateErr).To(MatchError(fmt.Sprintf("no release provided for job %s", adapter.HealthCheckErrandName)))
+			})
+		})
+
 		Context("when a job is provided by 2 different releases", func() {
 			BeforeEach(func() {
 				serviceReleases = append(serviceReleases, serviceadapter.ServiceRelease{
@@ -253,6 +307,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					Jobs:    serviceReleases[0].Jobs,
 				})
 			})
+
 			It("returns an error", func() {
 				Expect(generateErr).To(MatchError(fmt.Sprintf("job %s defined in multiple releases: some-release-name, some-other-release", adapter.RedisServerJobName)))
 			})
@@ -369,7 +424,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					Expect(generated.Stemcells[0].OS).To(Equal("some-stemcell-os"))
 					Expect(generated.Stemcells[0].Version).To(Equal("1234"))
 
-					Expect(generated.InstanceGroups).To(HaveLen(1))
+					Expect(generated.InstanceGroups).To(HaveLen(2))
 					Expect(generated.InstanceGroups[0].Name).To(Equal("redis-server"))
 					Expect(generated.InstanceGroups[0].Instances).To(Equal(45))
 
@@ -377,10 +432,11 @@ var _ = Describe("Redis Service Adapter", func() {
 						bosh.Job{Name: "redis-server", Release: "some-release-name"},
 					))
 
-					Expect(generated.InstanceGroups[0].VMType).To(Equal("some-vm"))               // TODO plan should change this
-					Expect(generated.InstanceGroups[0].PersistentDiskType).To(Equal("some-disk")) // TODO plan should change this
-					Expect(generated.InstanceGroups[0].Networks).To(ConsistOf(bosh.Network{Name: "some-network"}))
-					Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["persistence"]).To(Equal("yes")) // TODO plan should change this
+					Expect(generated.InstanceGroups[0].VMType).To(Equal("dedicated-vm"))
+					Expect(generated.InstanceGroups[0].PersistentDiskType).To(Equal("dedicated-disk"))
+					Expect(generated.InstanceGroups[0].Networks).To(ConsistOf(bosh.Network{Name: "dedicated-network"}))
+					Expect(generated.InstanceGroups[0].AZs).To(ConsistOf("dedicated-az1", "dedicated-az2"))
+					Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["persistence"]).To(Equal("yes"))
 					Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["password"]).To(Equal("some-password"))
 				})
 

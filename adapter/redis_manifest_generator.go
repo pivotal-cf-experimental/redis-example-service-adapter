@@ -18,22 +18,14 @@ const (
 	RedisServerJobName                = "redis-server"
 	RedisServerPersistencePropertyKey = "persistence"
 	RedisServerPort                   = 6379
+	HealthCheckErrandName             = "health-check"
+	LifecycleErrandType               = "errand"
 )
 
 var CurrentPasswordGenerator = randomPasswordGenerator
 
 type ManifestGenerator struct {
 	StderrLogger *log.Logger
-}
-
-func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
-	var illegalParams []string
-	for k, _ := range arbitraryParams {
-		if k != "maxclients" {
-			illegalParams = append(illegalParams, k)
-		}
-	}
-	return illegalParams
 }
 
 func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.ServiceDeployment, plan serviceadapter.Plan, requestParams serviceadapter.RequestParameters, previousManifest *bosh.BoshManifest, previousPlan *serviceadapter.Plan) (bosh.BoshManifest, error) {
@@ -57,10 +49,7 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 		return bosh.BoshManifest{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
-	networks := []bosh.Network{}
-	for _, network := range redisServerInstanceGroup.Networks {
-		networks = append(networks, bosh.Network{Name: network})
-	}
+	redisServerNetworks := mapNetworksToBoshNetworks(redisServerInstanceGroup.Networks)
 
 	redisProperties, err := m.redisServerProperties(serviceDeployment.DeploymentName, plan.Properties, arbitraryParameters, previousManifest)
 	if err != nil {
@@ -75,9 +64,48 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 		})
 	}
 
-	jobs, err := gatherJobs(serviceDeployment.Releases)
+	redisServerJobs, err := gatherRedisServerJobs(serviceDeployment.Releases)
 	if err != nil {
 		return bosh.BoshManifest{}, err
+	}
+
+	instanceGroups := []bosh.InstanceGroup{
+		{
+			Name:               RedisServerJobName,
+			Instances:          redisServerInstanceGroup.Instances,
+			Jobs:               redisServerJobs,
+			VMType:             redisServerInstanceGroup.VMType,
+			VMExtensions:       redisServerInstanceGroup.VMExtensions,
+			PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
+			Stemcell:           stemcellAlias,
+			Networks:           redisServerNetworks,
+			AZs:                redisServerInstanceGroup.AZs,
+			Properties:         redisProperties,
+		},
+	}
+
+	healthCheckInstanceGroup := findHealthCheckInstanceGroup(plan)
+
+	if healthCheckInstanceGroup != nil {
+		healthCheckJobs, err := gatherHealthCheckJobs(serviceDeployment.Releases)
+		if err != nil {
+			return bosh.BoshManifest{}, err
+		}
+
+		healthCheckNetworks := mapNetworksToBoshNetworks(healthCheckInstanceGroup.Networks)
+
+		instanceGroups = append(instanceGroups, bosh.InstanceGroup{
+			Name:               HealthCheckErrandName,
+			Instances:          healthCheckInstanceGroup.Instances,
+			Jobs:               healthCheckJobs,
+			VMType:             healthCheckInstanceGroup.VMType,
+			VMExtensions:       healthCheckInstanceGroup.VMExtensions,
+			PersistentDiskType: healthCheckInstanceGroup.PersistentDiskType,
+			Stemcell:           stemcellAlias,
+			Networks:           healthCheckNetworks,
+			AZs:                healthCheckInstanceGroup.AZs,
+			Lifecycle:          LifecycleErrandType,
+		})
 	}
 
 	return bosh.BoshManifest{
@@ -90,23 +118,28 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 				Version: serviceDeployment.Stemcell.Version,
 			},
 		},
-		InstanceGroups: []bosh.InstanceGroup{
-			{
-				Name:               RedisServerJobName,
-				Instances:          redisServerInstanceGroup.Instances,
-				Jobs:               jobs,
-				VMType:             redisServerInstanceGroup.VMType,
-				VMExtensions:       redisServerInstanceGroup.VMExtensions,
-				PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
-				Stemcell:           stemcellAlias,
-				Networks:           networks,
-				AZs:                redisServerInstanceGroup.AZs,
-				Properties:         redisProperties,
-			},
-		},
-		Update:     generateUpdateBlock(plan.Update),
-		Properties: map[string]interface{}{},
+		InstanceGroups: instanceGroups,
+		Update:         generateUpdateBlock(plan.Update),
+		Properties:     map[string]interface{}{},
 	}, nil
+}
+
+func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
+	var illegalParams []string
+	for k, _ := range arbitraryParams {
+		if k != "maxclients" {
+			illegalParams = append(illegalParams, k)
+		}
+	}
+	return illegalParams
+}
+
+func mapNetworksToBoshNetworks(networks []string) []bosh.Network {
+	boshNetworks := []bosh.Network{}
+	for _, network := range networks {
+		boshNetworks = append(boshNetworks, bosh.Network{Name: network})
+	}
+	return boshNetworks
 }
 
 func randomPasswordGenerator() (string, error) {
@@ -122,13 +155,22 @@ func randomPasswordGenerator() (string, error) {
 	return string(randomStringBytes), nil
 }
 
-func findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
+func findInstanceGroup(plan serviceadapter.Plan, instanceGroupName string) *serviceadapter.InstanceGroup {
 	for _, instanceGroup := range plan.InstanceGroups {
-		if instanceGroup.Name == RedisServerJobName {
+		if instanceGroup.Name == instanceGroupName {
 			return &instanceGroup
 		}
 	}
+
 	return nil
+}
+
+func findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
+	return findInstanceGroup(plan, RedisServerJobName)
+}
+
+func findHealthCheckInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
+	return findInstanceGroup(plan, HealthCheckErrandName)
 }
 
 var versionRegexp = regexp.MustCompile(`^(\d+)(?:\.(\d+))?(?:\+dev\.(\d+))?$`)
@@ -183,14 +225,20 @@ func generateUpdateBlock(update *serviceadapter.Update) bosh.Update {
 	}
 }
 
-func gatherJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
-	jobs := []bosh.Job{}
-
-	release, err := findReleaseForJob(RedisServerJobName, releases)
+func gatherJobs(releases serviceadapter.ServiceReleases, jobName string) ([]bosh.Job, error) {
+	release, err := findReleaseForJob(jobName, releases)
 	if err != nil {
 		return nil, err
 	}
-	return append(jobs, bosh.Job{Name: RedisServerJobName, Release: release.Name}), nil
+	return []bosh.Job{{Name: jobName, Release: release.Name}}, nil
+}
+
+func gatherRedisServerJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
+	return gatherJobs(releases, RedisServerJobName)
+}
+
+func gatherHealthCheckJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
+	return gatherJobs(releases, HealthCheckErrandName)
 }
 
 func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleases) (serviceadapter.ServiceRelease, error) {
