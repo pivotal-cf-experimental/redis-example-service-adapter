@@ -28,7 +28,13 @@ type ManifestGenerator struct {
 	StderrLogger *log.Logger
 }
 
-func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.ServiceDeployment, plan serviceadapter.Plan, requestParams serviceadapter.RequestParameters, previousManifest *bosh.BoshManifest, previousPlan *serviceadapter.Plan) (bosh.BoshManifest, error) {
+func (m ManifestGenerator) GenerateManifest(
+	serviceDeployment serviceadapter.ServiceDeployment,
+	plan serviceadapter.Plan,
+	requestParams serviceadapter.RequestParameters,
+	previousManifest *bosh.BoshManifest,
+	previousPlan *serviceadapter.Plan,
+) (bosh.BoshManifest, error) {
 	arbitraryParameters := requestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
@@ -51,7 +57,12 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 
 	redisServerNetworks := mapNetworksToBoshNetworks(redisServerInstanceGroup.Networks)
 
-	redisProperties, err := m.redisServerProperties(serviceDeployment.DeploymentName, plan.Properties, arbitraryParameters, previousManifest)
+	redisProperties, err := m.redisServerProperties(
+		serviceDeployment.DeploymentName,
+		plan.Properties,
+		arbitraryParameters,
+		previousManifest,
+	)
 	if err != nil {
 		return bosh.BoshManifest{}, err
 	}
@@ -87,6 +98,8 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 	healthCheckInstanceGroup := findHealthCheckInstanceGroup(plan)
 
 	if healthCheckInstanceGroup != nil {
+		healthCheckProperties := m.healthCheckProperties(plan.Properties)
+
 		healthCheckJobs, err := gatherHealthCheckJobs(serviceDeployment.Releases)
 		if err != nil {
 			return bosh.BoshManifest{}, err
@@ -105,6 +118,7 @@ func (m ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Ser
 			Networks:           healthCheckNetworks,
 			AZs:                healthCheckInstanceGroup.AZs,
 			Lifecycle:          LifecycleErrandType,
+			Properties:         healthCheckProperties,
 		})
 	}
 
@@ -344,6 +358,20 @@ func (m *ManifestGenerator) persistenceForRedisServer(planProperties serviceadap
 		persistence = "yes"
 	}
 	return persistence, nil
+}
+
+func (m *ManifestGenerator) healthCheckProperties(
+	planProperties serviceadapter.Properties,
+) map[string]interface{} {
+	if planProperties["systest_errand_failure_override"] == true {
+		return map[string]interface{}{
+			"health-check": map[interface{}]interface{}{
+				"systest-failure-override": true,
+			},
+		}
+	}
+
+	return nil
 }
 
 func oldGreaterThanNew(oldMajorVersion, oldMinorVersion, oldPatchVersion, newMajorVersion, newMinorVersion, newPatchVersion int) bool {

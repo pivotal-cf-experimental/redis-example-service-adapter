@@ -210,6 +210,12 @@ var _ = Describe("Redis Service Adapter", func() {
 				}))
 			})
 
+			It("does not set the health check instance group systest-failure-override property", func() {
+				Expect(generated.InstanceGroups[1].Properties["health-check"]).To(
+					BeNil(),
+				)
+			})
+
 			It("returns no error", func() {
 				Expect(generateErr).NotTo(HaveOccurred())
 			})
@@ -225,7 +231,54 @@ var _ = Describe("Redis Service Adapter", func() {
 			})
 
 			It("sets the instance group's redis persistence property to be 'no'", func() {
-				Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["persistence"]).To(Equal("no"))
+				Expect(
+					generated.
+						InstanceGroups[0].
+						Properties["redis"].(map[interface{}]interface{})["persistence"],
+				).To(Equal("no"))
+			})
+		})
+
+		Describe("failing health check plan", func() {
+			BeforeEach(func() {
+				plan = serviceadapter.Plan{
+					Properties: map[string]interface{}{
+						"persistence":                     false,
+						"systest_errand_failure_override": true,
+					},
+					InstanceGroups: []serviceadapter.InstanceGroup{
+						{
+							Name:               "redis-server",
+							VMType:             "dedicated-vm",
+							VMExtensions:       []string{"dedicated-extensions"},
+							PersistentDiskType: "dedicated-disk",
+							Networks:           []string{"dedicated-network"},
+							Instances:          45,
+							AZs:                []string{"dedicated-az1", "dedicated-az2"},
+						},
+						{
+							Name:         "health-check",
+							VMType:       "health-check-vm",
+							Lifecycle:    adapter.LifecycleErrandType,
+							VMExtensions: []string{"health-check-extensions"},
+							Networks:     []string{"health-check-network"},
+							Instances:    1,
+							AZs:          []string{"health-check-az1"},
+						},
+					},
+				}
+			})
+
+			It("returns no error", func() {
+				Expect(generateErr).NotTo(HaveOccurred())
+			})
+
+			It("sets the health check instance group systest-failure-override property to true", func() {
+				Expect(
+					generated.
+						InstanceGroups[1].
+						Properties["health-check"].(map[interface{}]interface{})["systest-failure-override"],
+				).To(Equal(true))
 			})
 		})
 
