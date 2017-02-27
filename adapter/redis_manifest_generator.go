@@ -19,6 +19,7 @@ const (
 	RedisServerPersistencePropertyKey = "persistence"
 	RedisServerPort                   = 6379
 	HealthCheckErrandName             = "health-check"
+	CleanupDataErrandName             = "cleanup-data"
 	LifecycleErrandType               = "errand"
 )
 
@@ -122,6 +123,33 @@ func (m ManifestGenerator) GenerateManifest(
 		})
 	}
 
+	cleanupDataInstanceGroup := findCleanupDataInstanceGroup(plan)
+
+	if cleanupDataInstanceGroup != nil {
+		cleanupDataProperties := m.cleanupDataProperties(plan.Properties)
+
+		cleanupDataJobs, err := gatherCleanupDataJobs(serviceDeployment.Releases)
+		if err != nil {
+			return bosh.BoshManifest{}, err
+		}
+
+		cleanupDataNetworks := mapNetworksToBoshNetworks(cleanupDataInstanceGroup.Networks)
+
+		instanceGroups = append(instanceGroups, bosh.InstanceGroup{
+			Name:               CleanupDataErrandName,
+			Instances:          cleanupDataInstanceGroup.Instances,
+			Jobs:               cleanupDataJobs,
+			VMType:             cleanupDataInstanceGroup.VMType,
+			VMExtensions:       cleanupDataInstanceGroup.VMExtensions,
+			PersistentDiskType: cleanupDataInstanceGroup.PersistentDiskType,
+			Stemcell:           stemcellAlias,
+			Networks:           cleanupDataNetworks,
+			AZs:                cleanupDataInstanceGroup.AZs,
+			Lifecycle:          LifecycleErrandType,
+			Properties:         cleanupDataProperties,
+		})
+	}
+
 	return bosh.BoshManifest{
 		Name:     serviceDeployment.DeploymentName,
 		Releases: releases,
@@ -185,6 +213,10 @@ func findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.Inst
 
 func findHealthCheckInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
 	return findInstanceGroup(plan, HealthCheckErrandName)
+}
+
+func findCleanupDataInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
+	return findInstanceGroup(plan, CleanupDataErrandName)
 }
 
 var versionRegexp = regexp.MustCompile(`^(\d+)(?:\.(\d+))?(?:\+dev\.(\d+))?$`)
@@ -253,6 +285,10 @@ func gatherRedisServerJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job,
 
 func gatherHealthCheckJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
 	return gatherJobs(releases, HealthCheckErrandName)
+}
+
+func gatherCleanupDataJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
+	return gatherJobs(releases, CleanupDataErrandName)
 }
 
 func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleases) (serviceadapter.ServiceRelease, error) {
@@ -363,9 +399,22 @@ func (m *ManifestGenerator) persistenceForRedisServer(planProperties serviceadap
 func (m *ManifestGenerator) healthCheckProperties(
 	planProperties serviceadapter.Properties,
 ) map[string]interface{} {
+	return errandProperties(HealthCheckErrandName, planProperties)
+}
+
+func (m *ManifestGenerator) cleanupDataProperties(
+	planProperties serviceadapter.Properties,
+) map[string]interface{} {
+	return errandProperties(CleanupDataErrandName, planProperties)
+}
+
+func errandProperties(
+	errandName string,
+	planProperties serviceadapter.Properties,
+) map[string]interface{} {
 	if planProperties["systest_errand_failure_override"] == true {
 		return map[string]interface{}{
-			"health-check": map[interface{}]interface{}{
+			errandName: map[interface{}]interface{}{
 				"systest-failure-override": true,
 			},
 		}

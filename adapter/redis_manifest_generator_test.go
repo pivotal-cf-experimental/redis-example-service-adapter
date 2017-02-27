@@ -72,6 +72,15 @@ var _ = Describe("Redis Service Adapter", func() {
 					Instances:    1,
 					AZs:          []string{"health-check-az1"},
 				},
+				{
+					Name:         "cleanup-data",
+					VMType:       "cleanup-data-vm",
+					Lifecycle:    adapter.LifecycleErrandType,
+					VMExtensions: []string{"cleanup-data-extensions"},
+					Networks:     []string{"cleanup-data-network"},
+					Instances:    1,
+					AZs:          []string{"cleanup-data-az1"},
+				},
 			},
 			Update: &serviceadapter.Update{
 				Canaries:        1,
@@ -100,7 +109,15 @@ var _ = Describe("Redis Service Adapter", func() {
 
 		plan = dedicatedPlan
 		serviceReleases = serviceadapter.ServiceReleases{
-			{Name: "some-release-name", Version: "4", Jobs: []string{adapter.RedisServerJobName, adapter.HealthCheckErrandName}},
+			{
+				Name:    "some-release-name",
+				Version: "4",
+				Jobs: []string{
+					adapter.RedisServerJobName,
+					adapter.HealthCheckErrandName,
+					adapter.CleanupDataErrandName,
+				},
+			},
 		}
 
 		stderr = gbytes.NewBuffer()
@@ -159,8 +176,8 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(generated.Stemcells[0].Version).To(Equal("1234"))
 			})
 
-			It("has two instance groups", func() {
-				Expect(generated.InstanceGroups).To(HaveLen(2))
+			It("has three instance groups", func() {
+				Expect(generated.InstanceGroups).To(HaveLen(3))
 			})
 
 			It("has a redis-server instance group", func() {
@@ -200,6 +217,20 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(generated.InstanceGroups[1].AZs).To(ConsistOf("health-check-az1"))
 			})
 
+			It("has a cleanup-data errand", func() {
+				Expect(generated.InstanceGroups[2].Name).To(Equal("cleanup-data"))
+				Expect(generated.InstanceGroups[2].Instances).To(Equal(1))
+				Expect(generated.InstanceGroups[2].Jobs).To(ConsistOf(
+					bosh.Job{Name: "cleanup-data", Release: "some-release-name"},
+				))
+				Expect(generated.InstanceGroups[2].Lifecycle).To(Equal(adapter.LifecycleErrandType))
+				Expect(generated.InstanceGroups[2].VMType).To(Equal("cleanup-data-vm"))
+				Expect(generated.InstanceGroups[2].VMExtensions).To(ConsistOf("cleanup-data-extensions"))
+				Expect(generated.InstanceGroups[2].PersistentDiskType).To(BeEmpty())
+				Expect(generated.InstanceGroups[2].Networks).To(ConsistOf(bosh.Network{Name: "cleanup-data-network"}))
+				Expect(generated.InstanceGroups[2].AZs).To(ConsistOf("cleanup-data-az1"))
+			})
+
 			It("has an update block", func() {
 				Expect(generated.Update).To(Equal(bosh.Update{
 					Canaries:        1,
@@ -211,7 +242,13 @@ var _ = Describe("Redis Service Adapter", func() {
 			})
 
 			It("does not set the health check instance group systest-failure-override property", func() {
-				Expect(generated.InstanceGroups[1].Properties["health-check"]).To(
+				Expect(generated.InstanceGroups[1].Properties[adapter.HealthCheckErrandName]).To(
+					BeNil(),
+				)
+			})
+
+			It("does not set the cleanup data instance group systest-failure-override property", func() {
+				Expect(generated.InstanceGroups[2].Properties[adapter.CleanupDataErrandName]).To(
 					BeNil(),
 				)
 			})
@@ -277,7 +314,50 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(
 					generated.
 						InstanceGroups[1].
-						Properties["health-check"].(map[interface{}]interface{})["systest-failure-override"],
+						Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-failure-override"],
+				).To(Equal(true))
+			})
+		})
+
+		Describe("failing cleanup data plan", func() {
+			BeforeEach(func() {
+				plan = serviceadapter.Plan{
+					Properties: map[string]interface{}{
+						"persistence":                     false,
+						"systest_errand_failure_override": true,
+					},
+					InstanceGroups: []serviceadapter.InstanceGroup{
+						{
+							Name:               "redis-server",
+							VMType:             "dedicated-vm",
+							VMExtensions:       []string{"dedicated-extensions"},
+							PersistentDiskType: "dedicated-disk",
+							Networks:           []string{"dedicated-network"},
+							Instances:          45,
+							AZs:                []string{"dedicated-az1", "dedicated-az2"},
+						},
+						{
+							Name:         "cleanup-data",
+							VMType:       "cleanup-data-vm",
+							Lifecycle:    adapter.LifecycleErrandType,
+							VMExtensions: []string{"cleanup-data-extensions"},
+							Networks:     []string{"cleanup-data-network"},
+							Instances:    1,
+							AZs:          []string{"cleanup-data-az1"},
+						},
+					},
+				}
+			})
+
+			It("returns no error", func() {
+				Expect(generateErr).NotTo(HaveOccurred())
+			})
+
+			It("sets the cleanup data instance group systest-failure-override property to true", func() {
+				Expect(
+					generated.
+						InstanceGroups[1].
+						Properties[adapter.CleanupDataErrandName].(map[interface{}]interface{})["systest-failure-override"],
 				).To(Equal(true))
 			})
 		})
@@ -342,13 +422,46 @@ var _ = Describe("Redis Service Adapter", func() {
 		Context("when the health-check job is missing from the service releases", func() {
 			BeforeEach(func() {
 				serviceReleases = serviceadapter.ServiceReleases{
-					{Name: "some-release-name", Version: "4", Jobs: []string{adapter.RedisServerJobName}},
+					{
+						Name:    "some-release-name",
+						Version: "4",
+						Jobs: []string{
+							adapter.RedisServerJobName,
+							adapter.CleanupDataErrandName,
+						},
+					},
 				}
 			})
 
 			It("returns an error", func() {
 				Expect(generateErr).To(HaveOccurred())
-				Expect(generateErr).To(MatchError(fmt.Sprintf("no release provided for job %s", adapter.HealthCheckErrandName)))
+				Expect(generateErr).To(MatchError(fmt.Sprintf(
+					"no release provided for job %s",
+					adapter.HealthCheckErrandName,
+				)))
+			})
+		})
+
+		Context("when the cleanup data job is missing from the service releases", func() {
+			BeforeEach(func() {
+				serviceReleases = serviceadapter.ServiceReleases{
+					{
+						Name:    "some-release-name",
+						Version: "4",
+						Jobs: []string{
+							adapter.RedisServerJobName,
+							adapter.HealthCheckErrandName,
+						},
+					},
+				}
+			})
+
+			It("returns an error", func() {
+				Expect(generateErr).To(HaveOccurred())
+				Expect(generateErr).To(MatchError(fmt.Sprintf(
+					"no release provided for job %s",
+					adapter.CleanupDataErrandName,
+				)))
 			})
 		})
 
@@ -477,7 +590,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					Expect(generated.Stemcells[0].OS).To(Equal("some-stemcell-os"))
 					Expect(generated.Stemcells[0].Version).To(Equal("1234"))
 
-					Expect(generated.InstanceGroups).To(HaveLen(2))
+					Expect(generated.InstanceGroups).To(HaveLen(3))
 					Expect(generated.InstanceGroups[0].Name).To(Equal("redis-server"))
 					Expect(generated.InstanceGroups[0].Instances).To(Equal(45))
 
