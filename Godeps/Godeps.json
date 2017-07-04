@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/pivotal-cf-experimental/redis-example-service-adapter",
-	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
