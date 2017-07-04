@@ -1,3 +1,18 @@
+// Copyright (C) 2016-Present Pivotal Software, Inc. All rights reserved.
+
+// This program and the accompanying materials are made available under
+// the terms of the under the Apache License, Version 2.0 (the "License”);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package serviceadapter
 
 import (
@@ -123,15 +138,50 @@ func (p Plan) Validate() error {
 	return validate.Struct(p)
 }
 
+type VMExtensions []string
+
+func (e *VMExtensions) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var ext []string
+
+	if err := unmarshal(&ext); err != nil {
+		return err
+	}
+
+	for _, s := range ext {
+		if s != "" {
+			*e = append(*e, s)
+		}
+	}
+
+	return nil
+}
+
 type InstanceGroup struct {
-	Name               string   `json:"name" validate:"required"`
-	VMType             string   `yaml:"vm_type" json:"vm_type" validate:"required"`
-	VMExtensions       []string `yaml:"vm_extensions,omitempty" json:"vm_extensions,omitempty"`
-	PersistentDiskType string   `yaml:"persistent_disk_type,omitempty" json:"persistent_disk_type,omitempty"`
-	Instances          int      `json:"instances" validate:"min=1"`
-	Networks           []string `json:"networks" validate:"required"`
-	AZs                []string `json:"azs" validate:"required,min=1"`
-	Lifecycle          string   `yaml:"lifecycle,omitempty" json:"lifecycle,omitempty"`
+	Name               string       `json:"name" validate:"required"`
+	VMType             string       `yaml:"vm_type" json:"vm_type" validate:"required"`
+	VMExtensions       VMExtensions `yaml:"vm_extensions,omitempty" json:"vm_extensions,omitempty"`
+	PersistentDiskType string       `yaml:"persistent_disk_type,omitempty" json:"persistent_disk_type,omitempty"`
+	Instances          int          `json:"instances" validate:"min=1"`
+	Networks           []string     `json:"networks" validate:"required"`
+	AZs                []string     `json:"azs" validate:"required,min=1"`
+	Lifecycle          string       `yaml:"lifecycle,omitempty" json:"lifecycle,omitempty"`
+}
+
+func (i *InstanceGroup) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type aux InstanceGroup
+
+	var tmp aux
+	if err := unmarshal(&tmp); err != nil {
+		return err
+	}
+
+	if tmp.VMExtensions == nil {
+		tmp.VMExtensions = VMExtensions{}
+	}
+
+	*i = InstanceGroup(tmp)
+
+	return nil
 }
 
 type Update struct {
