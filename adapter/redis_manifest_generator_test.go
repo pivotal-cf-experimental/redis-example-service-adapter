@@ -145,6 +145,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			adapter.CurrentPasswordGenerator = func() (string, error) {
 				return "really random password", nil
 			}
+
 			generated, generateErr = manifestGenerator.GenerateManifest(serviceadapter.ServiceDeployment{
 				DeploymentName: "some-instance-id",
 				Stemcell: serviceadapter.Stemcell{
@@ -359,36 +360,6 @@ var _ = Describe("Redis Service Adapter", func() {
 						InstanceGroups[1].
 						Properties[adapter.CleanupDataErrandName].(map[interface{}]interface{})["systest-failure-override"],
 				).To(Equal(true))
-			})
-		})
-
-		Context("when config_server is enabled", func() {
-			BeforeEach(func() {
-				plan.Properties["config_server_manifest"] = true
-			})
-
-			It("returns no error", func() {
-				Expect(generateErr).NotTo(HaveOccurred())
-			})
-
-			It("sets the redis password manifest property as a config server token", func() {
-				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
-				Expect(instanceGroupRedisProperties["password"]).To(Equal("((redis-server-password))"))
-			})
-		})
-
-		Context("when config_server is disabled", func() {
-			BeforeEach(func() {
-				plan.Properties["config_server_manifest"] = false
-			})
-
-			It("returns no error", func() {
-				Expect(generateErr).NotTo(HaveOccurred())
-			})
-
-			It("sets the redis password manifest property as a config server token", func() {
-				instanceGroupRedisProperties := generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
-				Expect(instanceGroupRedisProperties["password"]).To(Equal("really random password"))
 			})
 		})
 
@@ -687,9 +658,11 @@ var _ = Describe("Redis Service Adapter", func() {
 			}
 
 		})
+
 		JustBeforeEach(func() {
 			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil)
 		})
+
 		Context("has a password in the manifest", func() {
 			It("has no error", func() {
 				Expect(actualBindingErr).NotTo(HaveOccurred())
