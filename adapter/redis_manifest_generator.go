@@ -10,23 +10,32 @@ import (
 	"strconv"
 	"strings"
 
+	"io/ioutil"
+
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
+	"gopkg.in/yaml.v2"
 )
 
 const (
-	RedisServerJobName                = "redis-server"
 	RedisServerPersistencePropertyKey = "persistence"
 	RedisServerPort                   = 6379
+	RedisJobName                      = "redis-server"
 	HealthCheckErrandName             = "health-check"
 	CleanupDataErrandName             = "cleanup-data"
 	LifecycleErrandType               = "errand"
 )
 
+type generatorConfig struct {
+	RedisInstanceGroupName string `yaml:"redis_instance_group_name"`
+}
+
 var CurrentPasswordGenerator = randomPasswordGenerator
 
 type ManifestGenerator struct {
-	StderrLogger *log.Logger
+	StderrLogger           *log.Logger
+	ConfigPath             string
+	RedisInstanceGroupName string
 }
 
 func (m ManifestGenerator) GenerateManifest(
@@ -36,6 +45,7 @@ func (m ManifestGenerator) GenerateManifest(
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
+
 	arbitraryParameters := requestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
@@ -50,9 +60,15 @@ func (m ManifestGenerator) GenerateManifest(
 
 	stemcellAlias := "only-stemcell"
 
-	redisServerInstanceGroup := findRedisServerInstanceGroup(plan)
+	var err error
+	m.RedisInstanceGroupName, err = m.getRedisInstanceGroupNameFromConfig()
+	if err != nil {
+		return bosh.BoshManifest{}, err
+	}
+
+	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
 	if redisServerInstanceGroup == nil {
-		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", RedisServerJobName))
+		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", m.RedisInstanceGroupName))
 		return bosh.BoshManifest{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
@@ -76,25 +92,33 @@ func (m ManifestGenerator) GenerateManifest(
 		})
 	}
 
-	redisServerJobs, err := gatherRedisServerJobs(serviceDeployment.Releases)
+	redisServerJobs, err := m.gatherRedisServerJobs(serviceDeployment.Releases)
 	if err != nil {
 		return bosh.BoshManifest{}, err
 	}
 
-	instanceGroups := []bosh.InstanceGroup{
-		{
-			Name:               RedisServerJobName,
-			Instances:          redisServerInstanceGroup.Instances,
-			Jobs:               redisServerJobs,
-			VMType:             redisServerInstanceGroup.VMType,
-			VMExtensions:       redisServerInstanceGroup.VMExtensions,
-			PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
-			Stemcell:           stemcellAlias,
-			Networks:           redisServerNetworks,
-			AZs:                redisServerInstanceGroup.AZs,
-			Properties:         redisProperties,
-		},
+	migrations := []bosh.Migration{}
+	for _, m := range redisServerInstanceGroup.MigratedFrom {
+		migrations = append(migrations, bosh.Migration{
+			Name: m.Name,
+		})
 	}
+
+	newRedisInstanceGroup := bosh.InstanceGroup{
+		Name:               redisServerInstanceGroup.Name,
+		Instances:          redisServerInstanceGroup.Instances,
+		Jobs:               redisServerJobs,
+		VMType:             redisServerInstanceGroup.VMType,
+		VMExtensions:       redisServerInstanceGroup.VMExtensions,
+		PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
+		Stemcell:           stemcellAlias,
+		Networks:           redisServerNetworks,
+		AZs:                redisServerInstanceGroup.AZs,
+		Properties:         redisProperties,
+		MigratedFrom:       migrations,
+	}
+
+	instanceGroups := []bosh.InstanceGroup{newRedisInstanceGroup}
 
 	healthCheckInstanceGroup := findHealthCheckInstanceGroup(plan)
 
@@ -166,6 +190,24 @@ func (m ManifestGenerator) GenerateManifest(
 	}, nil
 }
 
+func (m *ManifestGenerator) getRedisInstanceGroupNameFromConfig() (string, error) {
+	generatorConfig := generatorConfig{}
+
+	ymlFile, err := ioutil.ReadFile(m.ConfigPath)
+	if err != nil {
+		m.StderrLogger.Println(fmt.Sprintf("Error reading config file from %s", m.ConfigPath))
+		return "", errors.New(fmt.Sprintf("Error reading config file from %s", m.ConfigPath))
+	}
+
+	err = yaml.Unmarshal(ymlFile, &generatorConfig)
+	if err != nil {
+		m.StderrLogger.Println("Error unmarshalling config")
+		return "", errors.New("Error unmarshalling config")
+	}
+
+	return generatorConfig.RedisInstanceGroupName, nil
+}
+
 func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
 	var illegalParams []string
 	for k, _ := range arbitraryParams {
@@ -207,8 +249,8 @@ func findInstanceGroup(plan serviceadapter.Plan, instanceGroupName string) *serv
 	return nil
 }
 
-func findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
-	return findInstanceGroup(plan, RedisServerJobName)
+func (m *ManifestGenerator) findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
+	return findInstanceGroup(plan, m.RedisInstanceGroupName)
 }
 
 func findHealthCheckInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
@@ -279,8 +321,8 @@ func gatherJobs(releases serviceadapter.ServiceReleases, jobName string) ([]bosh
 	return []bosh.Job{{Name: jobName, Release: release.Name}}, nil
 }
 
-func gatherRedisServerJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
-	return gatherJobs(releases, RedisServerJobName)
+func (m *ManifestGenerator) gatherRedisServerJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
+	return gatherJobs(releases, RedisJobName)
 }
 
 func gatherHealthCheckJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
@@ -426,8 +468,8 @@ func findOldManifestRedisRelease(redisReleaseName string, previousManifestReleas
 	return bosh.Release{}, fmt.Errorf("no release with name %s found in previous manifest", redisReleaseName)
 }
 
-func (m ManifestGenerator) validUpgradePath(previousManifest bosh.BoshManifest, serviceReleases serviceadapter.ServiceReleases) error {
-	newRedisRelease, err := findReleaseForJob(RedisServerJobName, serviceReleases)
+func (m *ManifestGenerator) validUpgradePath(previousManifest bosh.BoshManifest, serviceReleases serviceadapter.ServiceReleases) error {
+	newRedisRelease, err := findReleaseForJob(RedisJobName, serviceReleases)
 	if err != nil {
 		return err
 	}
