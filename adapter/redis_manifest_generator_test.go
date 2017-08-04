@@ -577,7 +577,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedManifest.InstanceGroups[0].MigratedFrom[0].Name).To(Equal("redis-server"))
 		})
 
-		It("generates the expected manifest when an unknown instance group name has been configured", func() {
+		It("returns an error when an unknown instance group name has been configured", func() {
 			oldManifest := createDefaultOldManifest()
 
 			manifestGenerator = createManifestGenerator("redis-example-service-adapter-missing.conf", stderrLogger)
@@ -600,6 +600,44 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedErr).To(HaveOccurred())
 			Expect(generatedErr).To(MatchError("Contact your operator, service configuration issue occurred"))
 			Expect(stderr).To(gbytes.Say("no foo instance group definition found"))
+		})
+
+		It("sets the expected update block when the plan update block is empty and old manifest does not exist", func() {
+			planWithoutUpdateBlock := dedicatedPlan
+			planWithoutUpdateBlock.Update = nil
+
+			generatedManifest, generatedErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				planWithoutUpdateBlock,
+				map[string]interface{}{},
+				nil,
+				nil,
+			)
+
+			Expect(generatedErr).ToNot(HaveOccurred())
+			Expect(generatedManifest.Update.MaxInFlight).To(Equal(4))
+			Expect(generatedManifest.Update.Canaries).To(Equal(4))
+		})
+
+		It("sets the expected update block when the plan update block is empty and old manifest exists", func() {
+			oldManifest := createDefaultOldManifest()
+
+			planWithoutUpdateBlock := dedicatedPlan
+			planWithoutUpdateBlock.Update = nil
+
+			generatedManifest, generatedErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				planWithoutUpdateBlock,
+				map[string]interface{}{},
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generatedErr).ToNot(HaveOccurred())
+			Expect(generatedManifest.Update.Canaries).To(Equal(1))
+			Expect(generatedManifest.Update.MaxInFlight).To(Equal(1))
 		})
 
 		Describe("release version tests", func() {

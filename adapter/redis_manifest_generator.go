@@ -185,7 +185,7 @@ func (m ManifestGenerator) GenerateManifest(
 			},
 		},
 		InstanceGroups: instanceGroups,
-		Update:         generateUpdateBlock(plan.Update),
+		Update:         generateUpdateBlock(plan.Update, previousManifest),
 		Properties:     map[string]interface{}{},
 	}, nil
 }
@@ -294,7 +294,7 @@ func parseReleaseVersion(versionString string) (int, int, int, error) {
 	return major, minor, patch, nil
 }
 
-func generateUpdateBlock(update *serviceadapter.Update) bosh.Update {
+func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.BoshManifest) bosh.Update {
 	if update != nil {
 		return bosh.Update{
 			Canaries:        update.Canaries,
@@ -304,12 +304,20 @@ func generateUpdateBlock(update *serviceadapter.Update) bosh.Update {
 			Serial:          update.Serial,
 		}
 	} else {
-		return bosh.Update{
-			Canaries:        1,
+		updateBlock := bosh.Update{
+			Canaries:        4,
 			CanaryWatchTime: "30000-240000",
 			UpdateWatchTime: "30000-240000",
 			MaxInFlight:     4,
 		}
+
+		if previousManifest == nil {
+			return updateBlock
+		}
+
+		updateBlock.Canaries = 1
+		updateBlock.MaxInFlight = 1
+		return updateBlock
 	}
 }
 
