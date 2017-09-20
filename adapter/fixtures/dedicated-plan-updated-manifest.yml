@@ -60,3 +60,5 @@ update:
   canary_watch_time: 100-200
   update_watch_time: 100-200
   max_in_flight: 5
+tags:
+  product: redis

@@ -187,6 +187,9 @@ func (m ManifestGenerator) GenerateManifest(
 		InstanceGroups: instanceGroups,
 		Update:         generateUpdateBlock(plan.Update, previousManifest),
 		Properties:     map[string]interface{}{},
+		Tags: map[string]interface{}{
+			"product": "redis",
+		},
 	}, nil
 }
 
