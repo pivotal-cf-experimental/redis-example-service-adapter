@@ -92,9 +92,20 @@ func (m ManifestGenerator) GenerateManifest(
 		})
 	}
 
-	redisServerJobs, err := m.gatherRedisServerJobs(serviceDeployment.Releases)
+	redisServerJob, err := m.gatherRedisServerJob(serviceDeployment.Releases)
 	if err != nil {
 		return bosh.BoshManifest{}, err
+	}
+
+	redisServerInstanceJobs := []bosh.Job{redisServerJob}
+
+	if value, ok := plan.Properties["colocated_errand"].(bool); ok && value {
+		healthCheckJob, err := gatherHealthCheckJob(serviceDeployment.Releases)
+		if err != nil {
+			return bosh.BoshManifest{}, err
+		}
+
+		redisServerInstanceJobs = append(redisServerInstanceJobs, healthCheckJob)
 	}
 
 	migrations := []bosh.Migration{}
@@ -107,7 +118,7 @@ func (m ManifestGenerator) GenerateManifest(
 	newRedisInstanceGroup := bosh.InstanceGroup{
 		Name:               redisServerInstanceGroup.Name,
 		Instances:          redisServerInstanceGroup.Instances,
-		Jobs:               redisServerJobs,
+		Jobs:               redisServerInstanceJobs,
 		VMType:             redisServerInstanceGroup.VMType,
 		VMExtensions:       redisServerInstanceGroup.VMExtensions,
 		PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
@@ -125,11 +136,13 @@ func (m ManifestGenerator) GenerateManifest(
 	if healthCheckInstanceGroup != nil {
 		healthCheckProperties := m.healthCheckProperties(plan.Properties)
 
-		healthCheckJobs, err := gatherHealthCheckJobs(serviceDeployment.Releases)
+		healthCheckJob, err := gatherHealthCheckJob(serviceDeployment.Releases)
+
 		if err != nil {
 			return bosh.BoshManifest{}, err
 		}
 
+		healthCheckJobs := []bosh.Job{healthCheckJob}
 		healthCheckNetworks := mapNetworksToBoshNetworks(healthCheckInstanceGroup.Networks)
 
 		instanceGroups = append(instanceGroups, bosh.InstanceGroup{
@@ -152,10 +165,12 @@ func (m ManifestGenerator) GenerateManifest(
 	if cleanupDataInstanceGroup != nil {
 		cleanupDataProperties := m.cleanupDataProperties(plan.Properties)
 
-		cleanupDataJobs, err := gatherCleanupDataJobs(serviceDeployment.Releases)
+		cleanupDataJob, err := gatherCleanupDataJob(serviceDeployment.Releases)
 		if err != nil {
 			return bosh.BoshManifest{}, err
 		}
+
+		cleanupDataJobs := []bosh.Job{cleanupDataJob}
 
 		cleanupDataNetworks := mapNetworksToBoshNetworks(cleanupDataInstanceGroup.Networks)
 
@@ -324,24 +339,24 @@ func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.B
 	}
 }
 
-func gatherJobs(releases serviceadapter.ServiceReleases, jobName string) ([]bosh.Job, error) {
+func gatherJob(releases serviceadapter.ServiceReleases, jobName string) (bosh.Job, error) {
 	release, err := findReleaseForJob(jobName, releases)
 	if err != nil {
-		return nil, err
+		return bosh.Job{}, err
 	}
-	return []bosh.Job{{Name: jobName, Release: release.Name}}, nil
+	return bosh.Job{Name: jobName, Release: release.Name}, nil
 }
 
-func (m *ManifestGenerator) gatherRedisServerJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
-	return gatherJobs(releases, RedisJobName)
+func (m *ManifestGenerator) gatherRedisServerJob(releases serviceadapter.ServiceReleases) (bosh.Job, error) {
+	return gatherJob(releases, RedisJobName)
 }
 
-func gatherHealthCheckJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
-	return gatherJobs(releases, HealthCheckErrandName)
+func gatherHealthCheckJob(releases serviceadapter.ServiceReleases) (bosh.Job, error) {
+	return gatherJob(releases, HealthCheckErrandName)
 }
 
-func gatherCleanupDataJobs(releases serviceadapter.ServiceReleases) ([]bosh.Job, error) {
-	return gatherJobs(releases, CleanupDataErrandName)
+func gatherCleanupDataJob(releases serviceadapter.ServiceReleases) (bosh.Job, error) {
+	return gatherJob(releases, CleanupDataErrandName)
 }
 
 func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleases) (serviceadapter.ServiceRelease, error) {

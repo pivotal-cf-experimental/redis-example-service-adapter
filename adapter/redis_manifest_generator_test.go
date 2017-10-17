@@ -141,6 +141,41 @@ var _ = Describe("Redis Service Adapter", func() {
 			).To(Equal("no"))
 		})
 
+		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true", func() {
+			oldManifest := createDefaultOldManifest()
+
+			plan := serviceadapter.Plan{
+				Properties: map[string]interface{}{
+					"persistence":      true,
+					"colocated_errand": true,
+				},
+				InstanceGroups: []serviceadapter.InstanceGroup{
+					{
+						Name:               "redis-server",
+						VMType:             "dedicated-vm",
+						VMExtensions:       []string{"dedicated-extensions"},
+						PersistentDiskType: "dedicated-disk",
+						Networks:           []string{"dedicated-network"},
+						Instances:          45,
+						AZs:                []string{"dedicated-az1", "dedicated-az2"},
+					},
+				},
+			}
+
+			colocatedPostDeployPlan := plan
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				colocatedPostDeployPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
+		})
+
 		It("sets the health check instance group systest-failure-override property to true when using a failing health check plan", func() {
 			plan := serviceadapter.Plan{
 				Properties: map[string]interface{}{
