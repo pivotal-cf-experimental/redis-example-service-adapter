@@ -2,6 +2,23 @@
 
 
 [[projects]]
+  name = "code.cloudfoundry.org/lager"
+  packages = ["."]
+  revision = "0bfa98e49e7a976af91e918d47978f07c00b081f"
+
+[[projects]]
+  name = "github.com/gorilla/context"
+  packages = ["."]
+  revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/onsi/ginkgo"
   packages = [".","config","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","types"]
   revision = "74c678d97c305753605c338c6c78c49ec104b5e7"
@@ -12,10 +29,16 @@
   revision = "9ed8da19f2156b87a803a8fdf6d126f627a12db1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/pivotal-cf/brokerapi"
+  packages = [".","auth"]
+  revision = "61af3c362c579b641bbffd7cb6355e5c4bfa5eda"
+
+[[projects]]
+  branch = "master"
   name = "github.com/pivotal-cf/on-demand-services-sdk"
   packages = ["bosh","serviceadapter"]
-  revision = "4747172913095edcc65074bc1c6f40f7c5038e2f"
-  version = "v0.17.1"
+  revision = "5b0b49a21e85fd4fba200763340886e53128b13a"
 
 [[projects]]
   name = "golang.org/x/sys"
@@ -25,8 +48,8 @@
 [[projects]]
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
-  revision = "014792cf3e266caff1e916876be12282b33059e0"
-  version = "v8.17.1"
+  revision = "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
+  version = "v8.18.2"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -36,6 +59,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9aade0120cd6ecb9534272966391e43c25c6165fb438de8eb0cde8013086f1cb"
+  inputs-digest = "7e2ae4a44513d86b1b288c2f5a6bd79f7635a28cce3d9f708eb42132dc2b9018"
   solver-name = "gps-cdcl"
   solver-version = 1
