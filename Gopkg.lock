@@ -38,7 +38,7 @@
   branch = "master"
   name = "github.com/pivotal-cf/on-demand-services-sdk"
   packages = ["bosh","serviceadapter"]
-  revision = "5b0b49a21e85fd4fba200763340886e53128b13a"
+  revision = "edbd00add2ead0443423207b68bf153b34c21e44"
 
 [[projects]]
   name = "golang.org/x/sys"
