@@ -141,10 +141,16 @@ var _ = Describe("Redis Service Adapter", func() {
 			).To(Equal("no"))
 		})
 
-		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true", func() {
+		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and post_deploy has been configured", func() {
 			oldManifest := createDefaultOldManifest()
 
 			plan := serviceadapter.Plan{
+				LifecycleErrands: serviceadapter.LifecycleErrands{
+					PostDeploy: serviceadapter.Errand{
+						Name:      "health-check",
+						Instances: []string{"redis-server"},
+					},
+				},
 				Properties: map[string]interface{}{
 					"persistence":      true,
 					"colocated_errand": true,
@@ -173,6 +179,51 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
+			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
+		})
+
+		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and pre_delete has been configured", func() {
+			oldManifest := createDefaultOldManifest()
+
+			plan := serviceadapter.Plan{
+				LifecycleErrands: serviceadapter.LifecycleErrands{
+					PreDelete: serviceadapter.Errand{
+						Name:      "cleanup-data",
+						Instances: []string{"redis-server"},
+					},
+				},
+				Properties: map[string]interface{}{
+					"persistence":      true,
+					"colocated_errand": true,
+				},
+				InstanceGroups: []serviceadapter.InstanceGroup{
+					{
+						Name:               "redis-server",
+						VMType:             "dedicated-vm",
+						VMExtensions:       []string{"dedicated-extensions"},
+						PersistentDiskType: "dedicated-disk",
+						Networks:           []string{"dedicated-network"},
+						Instances:          45,
+						AZs:                []string{"dedicated-az1", "dedicated-az2"},
+					},
+				},
+			}
+
+			colocatedPostDeployPlan := plan
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				colocatedPostDeployPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
 			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
 		})
 
@@ -877,4 +928,13 @@ func generateManifest(
 		},
 		Releases: serviceReleases,
 	}, plan, requestParams, oldManifest, oldPlan)
+}
+
+func containsJobName(list []bosh.Job, query string) bool {
+	for _, v := range list {
+		if v.Name == query {
+			return true
+		}
+	}
+	return false
 }
