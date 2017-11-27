@@ -211,11 +211,11 @@ var _ = Describe("Redis Service Adapter", func() {
 				},
 			}
 
-			colocatedPostDeployPlan := plan
+			colocatedPreDeletePlan := plan
 			generated, generateErr := generateManifest(
 				manifestGenerator,
 				defaultServiceReleases,
-				colocatedPostDeployPlan,
+				colocatedPreDeletePlan,
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
