@@ -613,6 +613,27 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(out).To(Equal(expectedManifest))
 		})
 
+		It("generates the expected manifest when the old manifest is valid and ignores appended commit hash", func() {
+			oldManifest := createDefaultOldManifest()
+			oldManifest.Releases[0].Version = "0.1+dev.8-fa37909"
+
+			generated, _ := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			out, err := yaml.Marshal(generated)
+			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
+
+			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
+
+			Expect(out).To(Equal(expectedManifest))
+		})
+
 		It("generates the expected manifest when when arbitrary parameters are present that clash with values in the valid old manifest", func() {
 			oldManifest := createDefaultOldManifest()
 			oldManifest.Releases[0].Version = "1"

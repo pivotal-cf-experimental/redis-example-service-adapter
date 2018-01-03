@@ -285,7 +285,7 @@ func findCleanupDataInstanceGroup(plan serviceadapter.Plan) *serviceadapter.Inst
 	return findInstanceGroup(plan, CleanupDataErrandName)
 }
 
-var versionRegexp = regexp.MustCompile(`^(\d+)(?:\.(\d+))?(?:\+dev\.(\d+))?$`)
+var versionRegexp = regexp.MustCompile(`^(\d+)(?:\.(\d+))?(?:\+dev\.(\d+))?`)
 
 func parseReleaseVersion(versionString string) (int, int, int, error) {
 	submatches := versionRegexp.FindStringSubmatch(versionString)
