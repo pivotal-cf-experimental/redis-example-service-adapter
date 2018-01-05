@@ -477,6 +477,14 @@ func errandProperties(
 		}
 	}
 
+	if planProperties["systest_errand_sleep"] != nil {
+		return map[string]interface{}{
+			errandName: map[interface{}]interface{}{
+				"systest-sleep": planProperties["systest_errand_sleep"],
+			},
+		}
+	}
+
 	return nil
 }
 

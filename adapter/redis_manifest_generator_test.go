@@ -226,52 +226,78 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
 			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
 		})
+		Context("setting systest properties on health check", func() {
+			var plan serviceadapter.Plan
 
-		It("sets the health check instance group systest-failure-override property to true when using a failing health check plan", func() {
-			plan := serviceadapter.Plan{
-				Properties: map[string]interface{}{
-					"persistence":                     false,
-					"systest_errand_failure_override": true,
-				},
-				InstanceGroups: []serviceadapter.InstanceGroup{
-					{
-						Name:               "redis-server",
-						VMType:             "dedicated-vm",
-						VMExtensions:       []string{"dedicated-extensions"},
-						PersistentDiskType: "dedicated-disk",
-						Networks:           []string{"dedicated-network"},
-						Instances:          45,
-						AZs:                []string{"dedicated-az1", "dedicated-az2"},
+			BeforeEach(func() {
+				plan = serviceadapter.Plan{
+					Properties: map[string]interface{}{
+						"persistence": false,
 					},
-					{
-						Name:         "health-check",
-						VMType:       "health-check-vm",
-						Lifecycle:    adapter.LifecycleErrandType,
-						VMExtensions: []string{"health-check-extensions"},
-						Networks:     []string{"health-check-network"},
-						Instances:    1,
-						AZs:          []string{"health-check-az1"},
+					InstanceGroups: []serviceadapter.InstanceGroup{
+						{
+							Name:               "redis-server",
+							VMType:             "dedicated-vm",
+							VMExtensions:       []string{"dedicated-extensions"},
+							PersistentDiskType: "dedicated-disk",
+							Networks:           []string{"dedicated-network"},
+							Instances:          45,
+							AZs:                []string{"dedicated-az1", "dedicated-az2"},
+						},
+						{
+							Name:         "health-check",
+							VMType:       "health-check-vm",
+							Lifecycle:    adapter.LifecycleErrandType,
+							VMExtensions: []string{"health-check-extensions"},
+							Networks:     []string{"health-check-network"},
+							Instances:    1,
+							AZs:          []string{"health-check-az1"},
+						},
 					},
-				},
-			}
+				}
+			})
 
-			oldManifest := createDefaultOldManifest()
+			It("sets the health check instance group systest-sleep property when using a health check plan with systest_errand_sleep set", func() {
+				plan.Properties["systest_errand_sleep"] = 5
+				oldManifest := createDefaultOldManifest()
 
-			generated, generateErr := generateManifest(
-				manifestGenerator,
-				defaultServiceReleases,
-				plan,
-				defaultRequestParameters,
-				&oldManifest,
-				nil,
-			)
+				generated, generateErr := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					plan,
+					defaultRequestParameters,
+					&oldManifest,
+					nil,
+				)
 
-			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(
-				generated.
-					InstanceGroups[1].
-					Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-failure-override"],
-			).To(Equal(true))
+				Expect(generateErr).NotTo(HaveOccurred())
+				Expect(
+					generated.
+						InstanceGroups[1].
+						Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-sleep"],
+				).To(Equal(5))
+			})
+
+			It("sets the health check instance group systest-failure-override property to true when using a failing health check plan", func() {
+				plan.Properties["systest_errand_failure_override"] = true
+				oldManifest := createDefaultOldManifest()
+
+				generated, generateErr := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					plan,
+					defaultRequestParameters,
+					&oldManifest,
+					nil,
+				)
+
+				Expect(generateErr).NotTo(HaveOccurred())
+				Expect(
+					generated.
+						InstanceGroups[1].
+						Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-failure-override"],
+				).To(Equal(true))
+			})
 		})
 
 		It("sets the health check instance group systest-failure-override property to true when using a failing cleanup data plan", func() {
