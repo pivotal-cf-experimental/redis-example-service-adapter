@@ -16,6 +16,7 @@
 package bosh
 
 type BoshManifest struct {
+	Addons         []Addon                `yaml:"addons,omitempty"`
 	Name           string                 `yaml:"name"`
 	Releases       []Release              `yaml:"releases"`
 	Stemcells      []Stemcell             `yaml:"stemcells"`
@@ -24,6 +25,12 @@ type BoshManifest struct {
 	Properties     map[string]interface{} `yaml:"properties,omitempty"`
 	Variables      []Variable             `yaml:"variables,omitempty"`
 	Tags           map[string]interface{} `yaml:"tags,omitempty"`
+}
+
+type Addon struct {
+	Name    string                 `yaml:"name"`
+	Jobs    []Job                  `yaml:"jobs"`
+	Include map[string]interface{} `yaml:"include,omitempty"`
 }
 
 type Variable struct {
@@ -56,6 +63,7 @@ type InstanceGroup struct {
 	Networks           []Network              `yaml:"networks"`
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	MigratedFrom       []Migration            `yaml:"migrated_from,omitempty"`
+	Env                map[string]interface{} `yaml:"env,omitempty"`
 }
 
 type Migration struct {
