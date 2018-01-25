@@ -318,9 +318,9 @@ func parseReleaseVersion(versionString string) (int, int, int, error) {
 	return major, minor, patch, nil
 }
 
-func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.BoshManifest) bosh.Update {
+func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.BoshManifest) *bosh.Update {
 	if update != nil {
-		return bosh.Update{
+		return &bosh.Update{
 			Canaries:        update.Canaries,
 			MaxInFlight:     update.MaxInFlight,
 			CanaryWatchTime: update.CanaryWatchTime,
@@ -328,7 +328,7 @@ func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.B
 			Serial:          update.Serial,
 		}
 	} else {
-		updateBlock := bosh.Update{
+		updateBlock := &bosh.Update{
 			Canaries:        4,
 			CanaryWatchTime: "30000-240000",
 			UpdateWatchTime: "30000-240000",
