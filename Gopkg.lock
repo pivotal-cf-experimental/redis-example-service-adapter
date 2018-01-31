@@ -20,76 +20,32 @@
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
-  packages = [
-    ".",
-    "config",
-    "internal/codelocation",
-    "internal/containernode",
-    "internal/failer",
-    "internal/leafnodes",
-    "internal/remote",
-    "internal/spec",
-    "internal/spec_iterator",
-    "internal/specrunner",
-    "internal/suite",
-    "internal/testingtproxy",
-    "internal/writer",
-    "reporters",
-    "reporters/stenographer",
-    "reporters/stenographer/support/go-colorable",
-    "reporters/stenographer/support/go-isatty",
-    "types"
-  ]
+  packages = [".","config","internal/codelocation","internal/containernode","internal/failer","internal/leafnodes","internal/remote","internal/spec","internal/spec_iterator","internal/specrunner","internal/suite","internal/testingtproxy","internal/writer","reporters","reporters/stenographer","reporters/stenographer/support/go-colorable","reporters/stenographer/support/go-isatty","types"]
   revision = "9eda700730cba42af70d53180f9dcce9266bc2bc"
   version = "v1.4.0"
 
 [[projects]]
   name = "github.com/onsi/gomega"
-  packages = [
-    ".",
-    "format",
-    "gbytes",
-    "gexec",
-    "internal/assertion",
-    "internal/asyncassertion",
-    "internal/oraclematcher",
-    "internal/testingtsupport",
-    "matchers",
-    "matchers/support/goraph/bipartitegraph",
-    "matchers/support/goraph/edge",
-    "matchers/support/goraph/node",
-    "matchers/support/goraph/util",
-    "types"
-  ]
+  packages = [".","format","gbytes","gexec","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
   revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
   version = "v1.3.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/pivotal-cf/brokerapi"
-  packages = [
-    ".",
-    "auth"
-  ]
+  packages = [".","auth"]
   revision = "35946a0079bda144d0c9ed68df36899451f90209"
 
 [[projects]]
   branch = "master"
   name = "github.com/pivotal-cf/on-demand-services-sdk"
-  packages = [
-    "bosh",
-    "serviceadapter"
-  ]
-  revision = "8c10f92ea2c069c0e45edf516271b32c33613bc6"
+  packages = ["bosh","serviceadapter"]
+  revision = "49cf3649cd34db8715b673d42e36710517e0f30e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset"
-  ]
+  packages = ["html","html/atom","html/charset"]
   revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
@@ -101,25 +57,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr"
-  ]
+  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
   revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
