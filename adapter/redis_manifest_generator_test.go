@@ -226,6 +226,78 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
 			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
 		})
+
+		It("includes use_short_dns_addresses in bosh features block when property set in plan", func() {
+			dedicatedPlan.Properties["use_short_dns_addresses"] = true
+			oldManifest := createDefaultOldManifest()
+
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(generated.Features.UseShortDNSAddresses).ToNot(BeNil())
+			Expect(*generated.Features.UseShortDNSAddresses).To(BeTrue())
+		})
+
+		It("includes use_short_dns_addresses in bosh features block when property set to false in plan", func() {
+			dedicatedPlan.Properties["use_short_dns_addresses"] = false
+			oldManifest := createDefaultOldManifest()
+
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(generated.Features.UseShortDNSAddresses).ToNot(BeNil())
+			Expect(*generated.Features.UseShortDNSAddresses).To(BeFalse())
+		})
+
+		It("does not include use_short_dns_addresses in bosh features block when property is not set in plan", func() {
+			oldManifest := createDefaultOldManifest()
+
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(generated.Features.UseShortDNSAddresses).To(BeNil())
+		})
+
+		It("includes arbitrary feature in bosh features block when property set in plan", func() {
+			dedicatedPlan.Properties["something_completely_different"] = "and_now"
+			oldManifest := createDefaultOldManifest()
+
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(generated.Features.ExtraFeatures).To(Equal(map[string]interface{}{
+				"something_completely_different": "and_now",
+			}))
+		})
+
 		Context("setting systest properties on health check", func() {
 			var plan serviceadapter.Plan
 

@@ -195,7 +195,7 @@ func (m ManifestGenerator) GenerateManifest(
 		})
 	}
 
-	return bosh.BoshManifest{
+	newManifest := bosh.BoshManifest{
 		Name:     serviceDeployment.DeploymentName,
 		Releases: releases,
 		Stemcells: []bosh.Stemcell{
@@ -211,7 +211,16 @@ func (m ManifestGenerator) GenerateManifest(
 		Tags: map[string]interface{}{
 			"product": "redis",
 		},
-	}, nil
+	}
+	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
+		newManifest.Features.UseShortDNSAddresses = bosh.BoolPointer(useShortDNSAddress == true)
+	}
+	if somethingCompletelyDifferent, set := plan.Properties["something_completely_different"]; set {
+		newManifest.Features.ExtraFeatures = map[string]interface{}{
+			"something_completely_different": somethingCompletelyDifferent,
+		}
+	}
+	return newManifest, nil
 }
 
 func (m *ManifestGenerator) getRedisInstanceGroupNameFromConfig() (string, error) {

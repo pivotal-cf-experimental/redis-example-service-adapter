@@ -80,7 +80,7 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "e12a59500d27004fb91074c7d52b29662214a9c3"
+  revision = "8c10f92ea2c069c0e45edf516271b32c33613bc6"
 
 [[projects]]
   branch = "master"
