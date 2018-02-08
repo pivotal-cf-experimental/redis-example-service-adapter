@@ -46,6 +46,12 @@ func (m ManifestGenerator) GenerateManifest(
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
 
+	ctx := requestParams.ArbitraryContext()
+	platform := requestParams.Platform()
+	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
+		m.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
+	}
+
 	arbitraryParameters := requestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {

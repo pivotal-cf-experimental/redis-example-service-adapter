@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"gopkg.in/yaml.v2"
@@ -139,6 +140,58 @@ var _ = Describe("Redis Service Adapter", func() {
 					InstanceGroups[0].
 					Properties["redis"].(map[interface{}]interface{})["persistence"],
 			).To(Equal("no"))
+		})
+
+		Context("validation of 'context' property", func() {
+
+			DescribeTable("logging validation of context and platform when requestParams is",
+				func(params map[string]interface{}) {
+					oldManifest := createDefaultOldManifest()
+					_, generateErr := generateManifest(
+						manifestGenerator,
+						defaultServiceReleases,
+						highMemoryPlan,
+						params,
+						&oldManifest,
+						nil,
+					)
+					Expect(generateErr).NotTo(HaveOccurred())
+					Expect(stderr).To(gbytes.Say(`Non Cloud Foundry platform \(or pre OSBAPI 2\.13\) detected`))
+				},
+				Entry("an empty map", map[string]interface{}{}),
+				Entry("a map with empty context", map[string]interface{}{"context": map[string]interface{}{}}),
+				Entry("a map with a context but empty platform", map[string]interface{}{
+					"context": map[string]interface{}{
+						"platform": "",
+					},
+				}),
+				Entry("a map with a context but non-cloudfoundry platform", map[string]interface{}{
+					"context": map[string]interface{}{
+						"platform": "not-cloudfoundry",
+					},
+				}),
+			)
+
+			It("does not log when the platform is cloudfoundry", func() {
+				params := map[string]interface{}{
+					"context": map[string]interface{}{
+						"platform": "cloudfoundry",
+					},
+				}
+
+				oldManifest := createDefaultOldManifest()
+				_, generateErr := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					highMemoryPlan,
+					params,
+					&oldManifest,
+					nil,
+				)
+				Expect(generateErr).NotTo(HaveOccurred())
+				Expect(stderr).NotTo(gbytes.Say(`Non Cloud Foundry platform \(or pre OSBAPI 2\.13\) detected`))
+			})
+
 		})
 
 		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and post_deploy has been configured", func() {
