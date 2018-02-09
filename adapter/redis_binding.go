@@ -14,6 +14,11 @@ type Binder struct {
 }
 
 func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters) (serviceadapter.Binding, error) {
+	ctx := requestParams.ArbitraryContext()
+	platform := requestParams.Platform()
+	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
+		b.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
+	}
 	redisHost, err := getRedisHost(deploymentTopology)
 	if err != nil {
 		b.StderrLogger.Println(err.Error())
