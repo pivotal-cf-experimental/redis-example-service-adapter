@@ -15,5 +15,9 @@ func main() {
 		ConfigPath:   "/var/vcap/jobs/service-adapter/config/service-adapter.conf",
 	}
 	binder := adapter.Binder{StderrLogger: stderrLogger}
-	serviceadapter.HandleCommandLineInvocation(os.Args, manifestGenerator, binder, nil)
+	handler := serviceadapter.CommandLineHandler{
+		ManifestGenerator: manifestGenerator,
+		Binder:            binder,
+	}
+	serviceadapter.HandleCLI(os.Args, handler)
 }
