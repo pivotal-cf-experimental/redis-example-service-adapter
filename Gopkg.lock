@@ -81,7 +81,13 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "b5c60d513859ba004975f1c31c39d4444bf9a236"
+  revision = "05a221496bdfa0a1e0ee17a4c2f4eba7369c195d"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   branch = "master"

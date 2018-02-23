@@ -28,17 +28,43 @@ import (
 	"gopkg.in/go-playground/validator.v8"
 )
 
+//go:generate counterfeiter -o fakes/manifest_generator.go . ManifestGenerator
 type ManifestGenerator interface {
 	GenerateManifest(serviceDeployment ServiceDeployment, plan Plan, requestParams RequestParameters, previousManifest *bosh.BoshManifest, previousPlan *Plan) (bosh.BoshManifest, error)
 }
 
+//go:generate counterfeiter -o fakes/binder.go . Binder
 type Binder interface {
 	CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams RequestParameters) (Binding, error)
 	DeleteBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams RequestParameters) error
 }
 
+//go:generate counterfeiter -o fakes/dashboard_url_generator.go . DashboardUrlGenerator
 type DashboardUrlGenerator interface {
 	DashboardUrl(instanceID string, plan Plan, manifest bosh.BoshManifest) (DashboardUrl, error)
+}
+
+//go:generate counterfeiter -o fakes/schema_generator.go . SchemaGenerator
+type SchemaGenerator interface {
+	GeneratePlanSchema(plan Plan) (PlanSchema, error)
+}
+
+type ServiceInstanceSchema struct {
+	Create JSONSchemas `json:"create"`
+	Update JSONSchemas `json:"update"`
+}
+
+type JSONSchemas struct {
+	Parameters map[string]interface{} `json:"parameters"`
+}
+
+type ServiceBindingSchema struct {
+	Create JSONSchemas `json:"create"`
+}
+
+type PlanSchema struct {
+	ServiceInstance ServiceInstanceSchema `json:"service_instance"`
+	ServiceBinding  ServiceBindingSchema  `json:"service_binding"`
 }
 
 type DashboardUrl struct {
