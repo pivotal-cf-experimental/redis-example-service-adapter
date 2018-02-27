@@ -108,43 +108,43 @@ func (h CommandLineHandler) Handle(args []string, outputWriter, errorWriter io.W
 		return h.generateManifest(serviceDeploymentJSON, planJSON, argsJSON, previousManifestYAML, previousPlanJSON, outputWriter)
 
 	case "create-binding":
-		if h.Binder != nil {
-			if len(args) < 6 {
-				failWithMissingArgsError(args, "<binding-ID> <bosh-VMs-JSON> <manifest-YAML> <request-params-JSON>")
-			}
-			bindingID := args[2]
-			boshVMsJSON := args[3]
-			manifestYAML := args[4]
-			reqParams := args[5]
-			h.createBinding(bindingID, boshVMsJSON, manifestYAML, reqParams)
-		} else {
-			failWithCode(NotImplementedExitCode, "binder not implemented")
+		if h.Binder == nil {
+			return CLIHandlerError{NotImplementedExitCode, "binder not implemented"}
 		}
+		if len(args) < 6 {
+			return missingArgsError(args, "<binding-ID> <bosh-VMs-JSON> <manifest-YAML> <request-params-JSON>")
+		}
+
+		bindingID := args[2]
+		boshVMsJSON := args[3]
+		manifestYAML := args[4]
+		reqParams := args[5]
+		return h.createBinding(bindingID, boshVMsJSON, manifestYAML, reqParams, outputWriter)
 	case "delete-binding":
-		if h.Binder != nil {
-			if len(args) < 6 {
-				failWithMissingArgsError(args, "<binding-ID> <bosh-VMs-JSON> <manifest-YAML> <request-params-JSON>")
-			}
-			bindingID := args[2]
-			boshVMsJSON := args[3]
-			manifestYAML := args[4]
-			unbindingRequestParams := args[5]
-			h.deleteBinding(bindingID, boshVMsJSON, manifestYAML, unbindingRequestParams)
-		} else {
-			failWithCode(NotImplementedExitCode, "binder not implemented")
+		if h.Binder == nil {
+			return CLIHandlerError{NotImplementedExitCode, "binder not implemented"}
 		}
+		if len(args) < 6 {
+			return missingArgsError(args, "<binding-ID> <bosh-VMs-JSON> <manifest-YAML> <request-params-JSON>")
+		}
+
+		bindingID := args[2]
+		boshVMsJSON := args[3]
+		manifestYAML := args[4]
+		unbindingRequestParams := args[5]
+		return h.deleteBinding(bindingID, boshVMsJSON, manifestYAML, unbindingRequestParams, outputWriter)
 	case "dashboard-url":
-		if h.DashboardURLGenerator != nil {
-			if len(args) < 5 {
-				failWithMissingArgsError(args, "<instance-ID> <plan-JSON> <manifest-YAML>")
-			}
-			instanceID := args[2]
-			planJSON := args[3]
-			manifestYAML := args[4]
-			h.dashboardUrl(instanceID, planJSON, manifestYAML)
-		} else {
-			failWithCode(NotImplementedExitCode, "dashboard-url not implemented")
+		if h.DashboardURLGenerator == nil {
+			return CLIHandlerError{NotImplementedExitCode, "dashboard-url not implemented"}
 		}
+		if len(args) < 5 {
+			return missingArgsError(args, "<instance-ID> <plan-JSON> <manifest-YAML>")
+		}
+
+		instanceID := args[2]
+		planJSON := args[3]
+		manifestYAML := args[4]
+		return h.dashboardUrl(instanceID, planJSON, manifestYAML, outputWriter)
 	case "generate-plan-schemas":
 		if h.SchemaGenerator == nil {
 			return CLIHandlerError{NotImplementedExitCode, "plan schema generator not implemented"}
@@ -286,64 +286,96 @@ func (h CommandLineHandler) generateManifest(serviceDeploymentJSON, planJSON, ar
 	return nil
 }
 
-func (h CommandLineHandler) createBinding(bindingID, boshVMsJSON, manifestYAML, requestParams string) {
+func (h CommandLineHandler) createBinding(bindingID, boshVMsJSON, manifestYAML, requestParams string, outputWriter io.Writer) error {
 	var boshVMs map[string][]string
-	h.must(json.Unmarshal([]byte(boshVMsJSON), &boshVMs), "unmarshalling BOSH VMs")
+	if err := json.Unmarshal([]byte(boshVMsJSON), &boshVMs); err != nil {
+		return errors.Wrap(err, "unmarshalling BOSH VMs")
+	}
 
 	var manifest bosh.BoshManifest
-	h.must(yaml.Unmarshal([]byte(manifestYAML), &manifest), "unmarshalling manifest")
+	if err := yaml.Unmarshal([]byte(manifestYAML), &manifest); err != nil {
+		return errors.Wrap(err, "unmarshalling manifest YAML")
+	}
 
 	var reqParams map[string]interface{}
-	h.must(json.Unmarshal([]byte(requestParams), &reqParams), "unmarshalling request binding parameters")
+	if err := json.Unmarshal([]byte(requestParams), &reqParams); err != nil {
+		return errors.Wrap(err, "unmarshalling request binding parameters")
+	}
 
 	binding, err := h.Binder.CreateBinding(bindingID, boshVMs, manifest, reqParams)
-	switch err := err.(type) {
-	case BindingAlreadyExistsError:
-		failWithCodeAndNotifyUser(BindingAlreadyExistsErrorExitCode, err.Error())
-	case AppGuidNotProvidedError:
-		failWithCodeAndNotifyUser(AppGuidNotProvidedErrorExitCode, err.Error())
-	case error:
-		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
-	default:
-		break
+	if err != nil {
+		fmt.Fprintf(outputWriter, err.Error())
+		switch err := err.(type) {
+		case BindingAlreadyExistsError:
+			return CLIHandlerError{BindingAlreadyExistsErrorExitCode, err.Error()}
+		case AppGuidNotProvidedError:
+			return CLIHandlerError{AppGuidNotProvidedErrorExitCode, err.Error()}
+		default:
+			return CLIHandlerError{ErrorExitCode, err.Error()}
+		}
 	}
 
-	h.must(json.NewEncoder(os.Stdout).Encode(binding), "marshalling binding")
+	if err := json.NewEncoder(outputWriter).Encode(binding); err != nil {
+		return errors.Wrap(err, "marshalling binding")
+	}
+
+	return nil
 }
 
-func (h CommandLineHandler) deleteBinding(bindingID, boshVMsJSON, manifestYAML string, requestParams string) {
+func (h CommandLineHandler) deleteBinding(bindingID, boshVMsJSON, manifestYAML string, requestParams string, outputWriter io.Writer) error {
 	var boshVMs bosh.BoshVMs
-	h.must(json.Unmarshal([]byte(boshVMsJSON), &boshVMs), "unmarshalling BOSH VMs")
+	if err := json.Unmarshal([]byte(boshVMsJSON), &boshVMs); err != nil {
+		return errors.Wrap(err, "unmarshalling BOSH VMs")
+	}
 
 	var manifest bosh.BoshManifest
-	h.must(yaml.Unmarshal([]byte(manifestYAML), &manifest), "unmarshalling manifest")
-
-	var params RequestParameters
-	h.must(json.Unmarshal([]byte(requestParams), &params), "unmarshalling request binding parameters")
-
-	err := h.Binder.DeleteBinding(bindingID, boshVMs, manifest, params)
-	switch err.(type) {
-	case BindingNotFoundError:
-		failWithCodeAndNotifyUser(BindingNotFoundErrorExitCode, err.Error())
-	case error:
-		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
+	if err := yaml.Unmarshal([]byte(manifestYAML), &manifest); err != nil {
+		return errors.Wrap(err, "unmarshalling manifest YAML")
 	}
+
+	var reqParams RequestParameters
+	if err := json.Unmarshal([]byte(requestParams), &reqParams); err != nil {
+		return errors.Wrap(err, "unmarshalling request binding parameters")
+	}
+
+	err := h.Binder.DeleteBinding(bindingID, boshVMs, manifest, reqParams)
+	if err != nil {
+		fmt.Fprintf(outputWriter, err.Error())
+		switch err.(type) {
+		case BindingNotFoundError:
+			return CLIHandlerError{BindingNotFoundErrorExitCode, err.Error()}
+		default:
+			return CLIHandlerError{ErrorExitCode, err.Error()}
+		}
+	}
+	return nil
 }
 
-func (h CommandLineHandler) dashboardUrl(instanceID, planJSON, manifestYAML string) {
+func (h CommandLineHandler) dashboardUrl(instanceID, planJSON, manifestYAML string, outputWriter io.Writer) error {
 	var plan Plan
-	h.must(json.Unmarshal([]byte(planJSON), &plan), "unmarshalling service plan")
-	h.must(plan.Validate(), "validating service plan")
+	if err := json.Unmarshal([]byte(planJSON), &plan); err != nil {
+		return errors.Wrap(err, "unmarshalling service plan")
+	}
+	if err := plan.Validate(); err != nil {
+		return errors.Wrap(err, "validating service plan")
+	}
 
 	var manifest bosh.BoshManifest
-	h.must(yaml.Unmarshal([]byte(manifestYAML), &manifest), "unmarshalling manifest")
+	if err := yaml.Unmarshal([]byte(manifestYAML), &manifest); err != nil {
+		return errors.Wrap(err, "unmarshalling manifest")
+	}
 
 	dashboardUrl, err := h.DashboardURLGenerator.DashboardUrl(instanceID, plan, manifest)
 	if err != nil {
-		failWithCodeAndNotifyUser(ErrorExitCode, err.Error())
+		fmt.Fprintf(outputWriter, err.Error())
+		return CLIHandlerError{ErrorExitCode, err.Error()}
 	}
 
-	h.must(json.NewEncoder(os.Stdout).Encode(dashboardUrl), "marshalling dashboardUrl")
+	if err := json.NewEncoder(outputWriter).Encode(dashboardUrl); err != nil {
+		return errors.Wrap(err, "marshalling dashboardUrl")
+	}
+
+	return nil
 }
 
 func (h CommandLineHandler) generatePlanSchema(planJSON string, outputWriter io.Writer) error {
