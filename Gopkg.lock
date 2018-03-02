@@ -2,9 +2,10 @@
 
 
 [[projects]]
+  branch = "master"
   name = "code.cloudfoundry.org/lager"
   packages = ["."]
-  revision = "0bfa98e49e7a976af91e918d47978f07c00b081f"
+  revision = "a77e1033ba8d8e36597be5c0d384ee6054105bc2"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -72,7 +73,7 @@
     ".",
     "auth"
   ]
-  revision = "35946a0079bda144d0c9ed68df36899451f90209"
+  revision = "d06fa8d0412b54021960ee7b0347989c519b87d3"
 
 [[projects]]
   branch = "master"
@@ -81,7 +82,7 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "49d13067c162bc95f848e22eaf020389ea1c8b32"
+  revision = "060bff7cf912e0a97c8482927e8a7161c8899f50"
 
 [[projects]]
   name = "github.com/pkg/errors"
