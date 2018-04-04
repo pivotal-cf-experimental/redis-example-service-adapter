@@ -242,10 +242,16 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			plan := serviceadapter.Plan{
 				LifecycleErrands: serviceadapter.LifecycleErrands{
-					PreDelete: []serviceadapter.Errand{{
-						Name:      "cleanup-data",
-						Instances: []string{"redis-server"},
-					}},
+					PreDelete: []serviceadapter.Errand{
+						{
+							Name:      "cleanup-data",
+							Instances: []string{"redis-server"},
+						},
+						{
+							Name:      "another-errand",
+							Instances: []string{"redis-server"},
+						},
+					},
 				},
 				Properties: map[string]interface{}{
 					"persistence":      true,
@@ -265,6 +271,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			}
 
 			colocatedPreDeletePlan := plan
+			defaultServiceReleases[0].Jobs = append(defaultServiceReleases[0].Jobs, "another-errand")
 			generated, generateErr := generateManifest(
 				manifestGenerator,
 				defaultServiceReleases,
@@ -277,7 +284,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generateErr).NotTo(HaveOccurred())
 			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
 			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
-			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "another-errand")).To(BeTrue())
+			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(3))
 		})
 
 		It("includes use_short_dns_addresses in bosh features block when property set in plan", func() {

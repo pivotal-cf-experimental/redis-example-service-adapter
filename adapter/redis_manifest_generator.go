@@ -106,16 +106,12 @@ func (m ManifestGenerator) GenerateManifest(
 	redisServerInstanceJobs := []bosh.Job{redisServerJob}
 
 	if value, ok := plan.Properties["colocated_errand"].(bool); ok && value {
-		var preDeleteErrandName string
-		if len(plan.LifecycleErrands.PreDelete) > 0 {
-			preDeleteErrandName = plan.LifecycleErrands.PreDelete[0].Name
+		errands := plan.LifecycleErrands.PreDelete
+		if plan.LifecycleErrands.PostDeploy.Name != "" {
+			errands = append(plan.LifecycleErrands.PreDelete, plan.LifecycleErrands.PostDeploy)
 		}
-		for _, errandName := range []string{plan.LifecycleErrands.PostDeploy.Name, preDeleteErrandName} {
-			if errandName == "" {
-				continue
-			}
-
-			job, err := gatherJob(serviceDeployment.Releases, errandName)
+		for _, errand := range errands {
+			job, err := gatherJob(serviceDeployment.Releases, errand.Name)
 			if err != nil {
 				return bosh.BoshManifest{}, err
 			}
