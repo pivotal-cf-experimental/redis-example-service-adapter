@@ -194,6 +194,68 @@ var _ = Describe("Redis Service Adapter", func() {
 
 		})
 
+
+		It("contains only multiple instance groups when different errands have distinct colocation settings", func() {
+			oldManifest := createDefaultOldManifest()
+
+			plan := serviceadapter.Plan{
+				LifecycleErrands: serviceadapter.LifecycleErrands{
+					PreDelete: []serviceadapter.Errand{
+						{
+							Name:      "health-check",
+							Instances: []string{"redis-server"},
+						},
+						{
+							Name:      "cleanup-data",
+						},
+					},
+				},
+				Properties: map[string]interface{}{
+					"persistence":      true,
+					"colocated_errand": true,
+				},
+				InstanceGroups: []serviceadapter.InstanceGroup{
+					{
+						Name:               "redis-server",
+						VMType:             "dedicated-vm",
+						VMExtensions:       []string{"dedicated-extensions"},
+						PersistentDiskType: "dedicated-disk",
+						Networks:           []string{"dedicated-network"},
+						Instances:          45,
+						AZs:                []string{"dedicated-az1", "dedicated-az2"},
+					},
+					{
+						Name:               "cleanup-data",
+						VMType:             "dedicated-vm",
+						VMExtensions:       []string{"dedicated-extensions"},
+						PersistentDiskType: "dedicated-disk",
+						Networks:           []string{"dedicated-network"},
+						Instances:          45,
+						AZs:                []string{"dedicated-az1", "dedicated-az2"},
+						Lifecycle: "errand",
+					},
+				},
+			}
+
+			colocatedPostDeployPlan := plan
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				colocatedPostDeployPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
+			Expect(containsJobName(generated.InstanceGroups[1].Jobs, "cleanup-data")).To(BeTrue())
+			Expect(generated.InstanceGroups[1].Lifecycle).To(Equal("errand"))
+			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
+			Expect(generated.InstanceGroups[1].Jobs).To(HaveLen(1))
+		})
+
 		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and post_deploy has been configured", func() {
 			oldManifest := createDefaultOldManifest()
 

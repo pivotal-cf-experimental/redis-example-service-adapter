@@ -111,6 +111,9 @@ func (m ManifestGenerator) GenerateManifest(
 			errands = append(plan.LifecycleErrands.PreDelete, plan.LifecycleErrands.PostDeploy)
 		}
 		for _, errand := range errands {
+			if len(errand.Instances) == 0 {
+				continue
+			}
 			job, err := gatherJob(serviceDeployment.Releases, errand.Name)
 			if err != nil {
 				return bosh.BoshManifest{}, err
