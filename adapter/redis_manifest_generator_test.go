@@ -412,7 +412,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			})
 
 			It("sets the health check instance group systest-failure-override property to true when using a failing health check plan", func() {
-				plan.Properties["systest_errand_failure_override"] = true
+				plan.Properties["systest_errand_failure_override"] = adapter.HealthCheckErrandName
 				oldManifest := createDefaultOldManifest()
 
 				generated, generateErr := generateManifest(
@@ -437,7 +437,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			plan := serviceadapter.Plan{
 				Properties: map[string]interface{}{
 					"persistence":                     false,
-					"systest_errand_failure_override": true,
+					"systest_errand_failure_override": adapter.CleanupDataErrandName,
 				},
 				InstanceGroups: []serviceadapter.InstanceGroup{
 					{

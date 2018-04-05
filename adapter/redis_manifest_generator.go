@@ -484,7 +484,7 @@ func errandProperties(
 	errandName string,
 	planProperties serviceadapter.Properties,
 ) map[string]interface{} {
-	if planProperties["systest_errand_failure_override"] == true {
+	if planProperties["systest_errand_failure_override"] == errandName {
 		return map[string]interface{}{
 			errandName: map[interface{}]interface{}{
 				"systest-failure-override": true,
