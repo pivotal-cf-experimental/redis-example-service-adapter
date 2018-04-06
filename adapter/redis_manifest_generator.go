@@ -106,10 +106,9 @@ func (m ManifestGenerator) GenerateManifest(
 	redisServerInstanceJobs := []bosh.Job{redisServerJob}
 
 	if value, ok := plan.Properties["colocated_errand"].(bool); ok && value {
-		errands := plan.LifecycleErrands.PreDelete
-		if plan.LifecycleErrands.PostDeploy.Name != "" {
-			errands = append(plan.LifecycleErrands.PreDelete, plan.LifecycleErrands.PostDeploy)
-		}
+		var errands []serviceadapter.Errand
+		errands = append(plan.LifecycleErrands.PreDelete, plan.LifecycleErrands.PostDeploy...)
+
 		for _, errand := range errands {
 			if len(errand.Instances) == 0 {
 				continue

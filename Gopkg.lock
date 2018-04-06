@@ -82,7 +82,7 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "f37fcf9d51bef32252e6710d9e61ed3f6670fc1b"
+  revision = "35e92368f7b6ad80c38d3e6349a48506fa030ea9"
 
 [[projects]]
   name = "github.com/pkg/errors"

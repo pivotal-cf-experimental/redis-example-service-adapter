@@ -261,10 +261,10 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			plan := serviceadapter.Plan{
 				LifecycleErrands: serviceadapter.LifecycleErrands{
-					PostDeploy: serviceadapter.Errand{
+					PostDeploy: []serviceadapter.Errand{{
 						Name:      "health-check",
 						Instances: []string{"redis-server"},
-					},
+					}},
 				},
 				Properties: map[string]interface{}{
 					"persistence":      true,
