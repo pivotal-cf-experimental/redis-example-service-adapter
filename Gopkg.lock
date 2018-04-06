@@ -67,13 +67,13 @@
   version = "v1.3.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/pivotal-cf/brokerapi"
   packages = [
     ".",
     "auth"
   ]
   revision = "a31b912e79c8cb4875840cbfbe8dc4f96f0507ab"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -82,7 +82,7 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "1cc704713a98f5b23570f6af3d658d1f0caf1f31"
+  revision = "f37fcf9d51bef32252e6710d9e61ed3f6670fc1b"
 
 [[projects]]
   name = "github.com/pkg/errors"
