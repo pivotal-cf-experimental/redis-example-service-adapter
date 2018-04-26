@@ -72,8 +72,8 @@
     ".",
     "auth"
   ]
-  revision = "a31b912e79c8cb4875840cbfbe8dc4f96f0507ab"
-  version = "v1.0.0"
+  revision = "bc29a3e7d6f911097c2c4998fc7cc7a408cc4268"
+  version = "v2.0.1"
 
 [[projects]]
   branch = "master"
@@ -82,7 +82,7 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "35e92368f7b6ad80c38d3e6349a48506fa030ea9"
+  revision = "623fff52bdbc8ac45b4ae3e12ba8a5089d4cc182"
 
 [[projects]]
   name = "github.com/pkg/errors"
