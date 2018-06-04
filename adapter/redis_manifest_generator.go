@@ -252,9 +252,10 @@ func (m *ManifestGenerator) getRedisInstanceGroupNameFromConfig() (string, error
 func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
 	var illegalParams []string
 	for k, _ := range arbitraryParams {
-		if k != "maxclients" {
-			illegalParams = append(illegalParams, k)
+		if k == "maxclients" || k == "credhub_secret_path" {
+			continue
 		}
+		illegalParams = append(illegalParams, k)
 	}
 	return illegalParams
 }
@@ -431,12 +432,17 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
+	properties := map[interface{}]interface{}{
+		"persistence": persistence,
+		"password":    password,
+		"maxclients":  maxClients,
+	}
+
+	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
+		properties["secret"] = "((" + secretPath.(string) + "))"
+	}
 	return map[string]interface{}{
-		"redis": map[interface{}]interface{}{
-			"persistence": persistence,
-			"password":    password,
-			"maxclients":  maxClients,
-		},
+		"redis": properties,
 	}, nil
 }
 

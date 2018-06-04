@@ -25,11 +25,23 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 		return serviceadapter.Binding{}, errors.New("")
 	}
 
+	var secretFromConfigStore string
+	if redisPlanProperties(manifest)["secret"] != nil {
+		pathWithParens, ok := redisPlanProperties(manifest)["secret"].(string)
+		if !ok {
+			err := errors.New("secret in manifest was not a string. expecting a credhub ref string")
+			b.StderrLogger.Println(err.Error())
+			return serviceadapter.Binding{}, err
+		}
+		path := pathWithParens[2 : len(pathWithParens)-2]
+		secretFromConfigStore = secrets[path]
+	}
 	return serviceadapter.Binding{
 		Credentials: map[string]interface{}{
 			"host":     redisHost,
 			"port":     RedisServerPort,
 			"password": redisPlanProperties(manifest)["password"].(string),
+			"secret":   secretFromConfigStore,
 		},
 	}, nil
 }

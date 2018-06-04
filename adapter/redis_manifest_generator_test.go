@@ -562,6 +562,27 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
 		})
 
+		It("set credhub reference if credhub_secret_path is set in arbitrary parameters", func() {
+			requestParams := map[string]interface{}{
+				"parameters": map[string]interface{}{
+					"credhub_secret_path": "/foo",
+				},
+			}
+
+			oldManifest := createDefaultOldManifest()
+
+			generated, err := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				requestParams,
+				&oldManifest,
+				nil,
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
+		})
+
 		It("returns an error when invalid arbitrary parameters are set", func() {
 			invalidRequestParams := map[string]interface{}{
 				"parameters": map[string]interface{}{"maxclients": 22.0, "foo": "bar", "baz": "barry"},
@@ -830,7 +851,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
 
-			Expect(out).To(Equal(expectedManifest))
+			Expect(string(out)).To(Equal(string(expectedManifest)))
 		})
 
 		It("generates the expected manifest when the old manifest is valid and ignores appended commit hash", func() {
@@ -851,7 +872,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
 
-			Expect(out).To(Equal(expectedManifest))
+			Expect(string(out)).To(Equal(string(expectedManifest)))
 		})
 
 		It("generates the expected manifest when when arbitrary parameters are present that clash with values in the valid old manifest", func() {
@@ -876,7 +897,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest-arbitrary-params.yml"))
 
-			Expect(out).To(Equal(expectedManifest))
+			Expect(string(out)).To(Equal(string(expectedManifest)))
 		})
 
 		It("generates the expected manifest when an instance group has been migrated", func() {
