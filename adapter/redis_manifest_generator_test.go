@@ -194,7 +194,6 @@ var _ = Describe("Redis Service Adapter", func() {
 
 		})
 
-
 		It("contains only multiple instance groups when different errands have distinct colocation settings", func() {
 			oldManifest := createDefaultOldManifest()
 
@@ -206,7 +205,7 @@ var _ = Describe("Redis Service Adapter", func() {
 							Instances: []string{"redis-server"},
 						},
 						{
-							Name:      "cleanup-data",
+							Name: "cleanup-data",
 						},
 					},
 				},
@@ -232,7 +231,7 @@ var _ = Describe("Redis Service Adapter", func() {
 						Networks:           []string{"dedicated-network"},
 						Instances:          45,
 						AZs:                []string{"dedicated-az1", "dedicated-az2"},
-						Lifecycle: "errand",
+						Lifecycle:          "errand",
 					},
 				},
 			}
@@ -1051,7 +1050,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		})
 
 		JustBeforeEach(func() {
-			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil)
+			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil)
 		})
 
 		Context("has a password in the manifest", func() {
