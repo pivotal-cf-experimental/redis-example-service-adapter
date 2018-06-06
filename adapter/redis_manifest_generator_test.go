@@ -968,6 +968,24 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedManifest.Update.Canaries).To(Equal(4))
 		})
 
+		It("sets the secret property using the old manifest value when credhub_secret_path not present in arbitrary parameters", func() {
+			oldManifest := createDefaultOldManifest()
+			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"] = "/some/special/path"
+			emptyArbitraryParams := map[string]interface{}{}
+
+			generatedManifest, generatedErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				emptyArbitraryParams,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generatedErr).ToNot(HaveOccurred())
+			Expect(generatedManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("/some/special/path"))
+		})
+
 		It("sets the expected update block when the plan update block is empty and old manifest exists", func() {
 			oldManifest := createDefaultOldManifest()
 

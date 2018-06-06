@@ -440,7 +440,10 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
 		properties["secret"] = "((" + secretPath.(string) + "))"
+	} else if secret, ok := previousRedisProperties["secret"]; ok {
+		properties["secret"] = secret
 	}
+
 	return map[string]interface{}{
 		"redis": properties,
 	}, nil

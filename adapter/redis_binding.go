@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
@@ -33,8 +34,20 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 			b.StderrLogger.Println(err.Error())
 			return serviceadapter.Binding{}, err
 		}
-		path := pathWithParens[2 : len(pathWithParens)-2]
-		secretFromConfigStore = secrets[path]
+		re := regexp.MustCompile(`^\(\(([^()]+)\)\)$`)
+		match := re.FindAllStringSubmatch(pathWithParens, -1)
+		if len(match) != 1 || len(match[0]) != 2 {
+			err := fmt.Errorf("expecting a credhub ref string with format ((xxx)), but got: %s", pathWithParens)
+			b.StderrLogger.Println(err.Error())
+			return serviceadapter.Binding{}, err
+		}
+		path := match[0][1]
+		secretFromConfigStore, ok = secrets[path]
+		if !ok {
+			err := fmt.Errorf("secret '%s' not present in manifest secrets passed to bind", path)
+			b.StderrLogger.Println(err.Error())
+			return serviceadapter.Binding{}, err
+		}
 	}
 	return serviceadapter.Binding{
 		Credentials: map[string]interface{}{
