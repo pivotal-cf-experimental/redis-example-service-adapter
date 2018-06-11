@@ -26,6 +26,16 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 		return serviceadapter.Binding{}, errors.New("")
 	}
 
+	var generatedSecret string
+	if secrets != nil {
+		var ok bool
+		generatedSecret, ok = secrets["secret_pass"]
+		if !ok {
+			err := errors.New("manifest wasn't correctly interpolated: missing value for `secret_pass`")
+			b.StderrLogger.Println(err.Error())
+			return serviceadapter.Binding{}, err
+		}
+	}
 	var secretFromConfigStore string
 	if redisPlanProperties(manifest)["secret"] != nil {
 		pathWithParens, ok := redisPlanProperties(manifest)["secret"].(string)
@@ -51,10 +61,11 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 	}
 	return serviceadapter.Binding{
 		Credentials: map[string]interface{}{
-			"host":     redisHost,
-			"port":     RedisServerPort,
-			"password": redisPlanProperties(manifest)["password"].(string),
-			"secret":   secretFromConfigStore,
+			"host":             redisHost,
+			"port":             RedisServerPort,
+			"generated_secret": generatedSecret,
+			"password":         redisPlanProperties(manifest)["password"].(string),
+			"secret":           secretFromConfigStore,
 		},
 	}, nil
 }

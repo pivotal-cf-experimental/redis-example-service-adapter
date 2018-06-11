@@ -65,6 +65,7 @@ func (m ManifestGenerator) GenerateManifest(
 	}
 
 	stemcellAlias := "only-stemcell"
+	secretVariable := "secret_pass"
 
 	var err error
 	m.RedisInstanceGroupName, err = m.getRedisInstanceGroupNameFromConfig()
@@ -89,6 +90,7 @@ func (m ManifestGenerator) GenerateManifest(
 	if err != nil {
 		return bosh.BoshManifest{}, err
 	}
+	redisProperties["secret"] = "((" + secretVariable + "))"
 
 	releases := []bosh.Release{}
 	for _, release := range serviceDeployment.Releases {
@@ -219,6 +221,7 @@ func (m ManifestGenerator) GenerateManifest(
 		Tags: map[string]interface{}{
 			"product": "redis",
 		},
+		Variables: []bosh.Variable{{Name: secretVariable, Type: "password"}},
 	}
 	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
 		newManifest.Features.UseShortDNSAddresses = bosh.BoolPointer(useShortDNSAddress == true)

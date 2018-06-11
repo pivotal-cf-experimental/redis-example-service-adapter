@@ -27,6 +27,7 @@ instance_groups:
       maxclients: 47
       password: some-password
       persistence: "yes"
+    secret: ((secret_pass))
 - name: health-check
   lifecycle: errand
   instances: 1
@@ -60,5 +61,8 @@ update:
   canary_watch_time: 100-200
   update_watch_time: 100-200
   max_in_flight: 5
+variables:
+- name: secret_pass
+  type: password
 tags:
   product: redis
