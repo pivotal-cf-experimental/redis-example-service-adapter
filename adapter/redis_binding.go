@@ -30,7 +30,7 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 	if secrets != nil {
 		var ok bool
 		generatedSecret, ok = secrets["secret_pass"]
-		if !ok {
+		if !ok || generatedSecret == "" {
 			err := errors.New("manifest wasn't correctly interpolated: missing value for `secret_pass`")
 			b.StderrLogger.Println(err.Error())
 			return serviceadapter.Binding{}, err
