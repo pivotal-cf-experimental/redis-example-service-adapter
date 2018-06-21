@@ -32,6 +32,11 @@ type generatorConfig struct {
 
 var CurrentPasswordGenerator = randomPasswordGenerator
 
+const (
+	ManagedSecretValue = "Hornswaggle"
+	ManagedSecretKey   = "managed_secret"
+)
+
 type ManifestGenerator struct {
 	StderrLogger           *log.Logger
 	ConfigPath             string
@@ -44,7 +49,7 @@ func (m ManifestGenerator) GenerateManifest(
 	requestParams serviceadapter.RequestParameters,
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
-) (bosh.BoshManifest, error) {
+) (serviceadapter.GenerateManifestOutput, error) {
 
 	ctx := requestParams.ArbitraryContext()
 	platform := requestParams.Platform()
@@ -55,28 +60,29 @@ func (m ManifestGenerator) GenerateManifest(
 	arbitraryParameters := requestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
-		return bosh.BoshManifest{}, fmt.Errorf("unsupported parameter(s) for this service plan: %s", strings.Join(illegalArbParams, ", "))
+		return serviceadapter.GenerateManifestOutput{}, fmt.Errorf("unsupported parameter(s) for this service plan: %s", strings.Join(illegalArbParams, ", "))
 	}
 
 	if previousManifest != nil {
 		if err := m.validUpgradePath(*previousManifest, serviceDeployment.Releases); err != nil {
-			return bosh.BoshManifest{}, err
+			return serviceadapter.GenerateManifestOutput{}, err
 		}
 	}
 
 	stemcellAlias := "only-stemcell"
 	secretVariable := "secret_pass"
+	managedSecretName := ManagedSecretKey
 
 	var err error
 	m.RedisInstanceGroupName, err = m.getRedisInstanceGroupNameFromConfig()
 	if err != nil {
-		return bosh.BoshManifest{}, err
+		return serviceadapter.GenerateManifestOutput{}, err
 	}
 
 	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
 	if redisServerInstanceGroup == nil {
 		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", m.RedisInstanceGroupName))
-		return bosh.BoshManifest{}, errors.New("Contact your operator, service configuration issue occurred")
+		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
 	redisServerNetworks := mapNetworksToBoshNetworks(redisServerInstanceGroup.Networks)
@@ -88,9 +94,10 @@ func (m ManifestGenerator) GenerateManifest(
 		previousManifest,
 	)
 	if err != nil {
-		return bosh.BoshManifest{}, err
+		return serviceadapter.GenerateManifestOutput{}, err
 	}
 	redisProperties["secret"] = "((" + secretVariable + "))"
+	redisProperties["odb_managed_secret"] = "((" + serviceadapter.ODBSecretPrefix + ":" + managedSecretName + "))"
 
 	releases := []bosh.Release{}
 	for _, release := range serviceDeployment.Releases {
@@ -102,7 +109,7 @@ func (m ManifestGenerator) GenerateManifest(
 
 	redisServerJob, err := m.gatherRedisServerJob(serviceDeployment.Releases)
 	if err != nil {
-		return bosh.BoshManifest{}, err
+		return serviceadapter.GenerateManifestOutput{}, err
 	}
 
 	redisServerInstanceJobs := []bosh.Job{redisServerJob}
@@ -117,14 +124,14 @@ func (m ManifestGenerator) GenerateManifest(
 			}
 			job, err := gatherJob(serviceDeployment.Releases, errand.Name)
 			if err != nil {
-				return bosh.BoshManifest{}, err
+				return serviceadapter.GenerateManifestOutput{}, err
 			}
 
 			redisServerInstanceJobs = append(redisServerInstanceJobs, job)
 		}
 	}
 
-	migrations := []bosh.Migration{}
+	var migrations []bosh.Migration
 	for _, m := range redisServerInstanceGroup.MigratedFrom {
 		migrations = append(migrations, bosh.Migration{
 			Name: m.Name,
@@ -155,7 +162,7 @@ func (m ManifestGenerator) GenerateManifest(
 		healthCheckJob, err := gatherHealthCheckJob(serviceDeployment.Releases)
 
 		if err != nil {
-			return bosh.BoshManifest{}, err
+			return serviceadapter.GenerateManifestOutput{}, err
 		}
 
 		healthCheckJobs := []bosh.Job{healthCheckJob}
@@ -183,7 +190,7 @@ func (m ManifestGenerator) GenerateManifest(
 
 		cleanupDataJob, err := gatherCleanupDataJob(serviceDeployment.Releases)
 		if err != nil {
-			return bosh.BoshManifest{}, err
+			return serviceadapter.GenerateManifestOutput{}, err
 		}
 
 		cleanupDataJobs := []bosh.Job{cleanupDataJob}
@@ -231,7 +238,12 @@ func (m ManifestGenerator) GenerateManifest(
 			"something_completely_different": somethingCompletelyDifferent,
 		}
 	}
-	return newManifest, nil
+	return serviceadapter.GenerateManifestOutput{
+		Manifest: newManifest,
+		ODBManagedSecrets: serviceadapter.ODBManagedSecrets{
+			managedSecretName: ManagedSecretValue,
+		},
+	}, nil
 }
 
 func (m *ManifestGenerator) getRedisInstanceGroupNameFromConfig() (string, error) {

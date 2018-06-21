@@ -136,7 +136,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			Expect(generateErr).NotTo(HaveOccurred())
 			Expect(
-				generated.
+				generated.Manifest.
 					InstanceGroups[0].
 					Properties["redis"].(map[interface{}]interface{})["persistence"],
 			).To(Equal("no"))
@@ -247,12 +247,12 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
-			Expect(containsJobName(generated.InstanceGroups[1].Jobs, "cleanup-data")).To(BeTrue())
-			Expect(generated.InstanceGroups[1].Lifecycle).To(Equal("errand"))
-			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
-			Expect(generated.InstanceGroups[1].Jobs).To(HaveLen(1))
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
+			Expect(containsJobName(generated.Manifest.InstanceGroups[1].Jobs, "cleanup-data")).To(BeTrue())
+			Expect(generated.Manifest.InstanceGroups[1].Lifecycle).To(Equal("errand"))
+			Expect(generated.Manifest.InstanceGroups[0].Jobs).To(HaveLen(2))
+			Expect(generated.Manifest.InstanceGroups[1].Jobs).To(HaveLen(1))
 		})
 
 		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and post_deploy has been configured", func() {
@@ -293,9 +293,9 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
-			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(2))
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "health-check")).To(BeTrue())
+			Expect(generated.Manifest.InstanceGroups[0].Jobs).To(HaveLen(2))
 		})
 
 		It("contains only one instance group and multiple jobs, when `colocated_errand` property is set to true and pre_delete has been configured", func() {
@@ -343,10 +343,10 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
-			Expect(containsJobName(generated.InstanceGroups[0].Jobs, "another-errand")).To(BeTrue())
-			Expect(generated.InstanceGroups[0].Jobs).To(HaveLen(3))
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "redis-server")).To(BeTrue())
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "cleanup-data")).To(BeTrue())
+			Expect(containsJobName(generated.Manifest.InstanceGroups[0].Jobs, "another-errand")).To(BeTrue())
+			Expect(generated.Manifest.InstanceGroups[0].Jobs).To(HaveLen(3))
 		})
 
 		It("includes use_short_dns_addresses in bosh features block when property set in plan", func() {
@@ -363,8 +363,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(generated.Features.UseShortDNSAddresses).ToNot(BeNil())
-			Expect(*generated.Features.UseShortDNSAddresses).To(BeTrue())
+			Expect(generated.Manifest.Features.UseShortDNSAddresses).ToNot(BeNil())
+			Expect(*generated.Manifest.Features.UseShortDNSAddresses).To(BeTrue())
 		})
 
 		It("includes use_short_dns_addresses in bosh features block when property set to false in plan", func() {
@@ -381,8 +381,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(generated.Features.UseShortDNSAddresses).ToNot(BeNil())
-			Expect(*generated.Features.UseShortDNSAddresses).To(BeFalse())
+			Expect(generated.Manifest.Features.UseShortDNSAddresses).ToNot(BeNil())
+			Expect(*generated.Manifest.Features.UseShortDNSAddresses).To(BeFalse())
 		})
 
 		It("does not include use_short_dns_addresses in bosh features block when property is not set in plan", func() {
@@ -398,7 +398,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(generated.Features.UseShortDNSAddresses).To(BeNil())
+			Expect(generated.Manifest.Features.UseShortDNSAddresses).To(BeNil())
 		})
 
 		It("includes arbitrary feature in bosh features block when property set in plan", func() {
@@ -415,7 +415,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
-			Expect(generated.Features.ExtraFeatures).To(Equal(map[string]interface{}{
+			Expect(generated.Manifest.Features.ExtraFeatures).To(Equal(map[string]interface{}{
 				"something_completely_different": "and_now",
 			}))
 		})
@@ -466,7 +466,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 				Expect(generateErr).NotTo(HaveOccurred())
 				Expect(
-					generated.
+					generated.Manifest.
 						InstanceGroups[1].
 						Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-sleep"],
 				).To(Equal(5))
@@ -487,7 +487,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 				Expect(generateErr).NotTo(HaveOccurred())
 				Expect(
-					generated.
+					generated.Manifest.
 						InstanceGroups[1].
 						Properties[adapter.HealthCheckErrandName].(map[interface{}]interface{})["systest-failure-override"],
 				).To(Equal(true))
@@ -535,7 +535,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			Expect(generateErr).NotTo(HaveOccurred())
 			Expect(
-				generated.
+				generated.Manifest.
 					InstanceGroups[1].
 					Properties[adapter.CleanupDataErrandName].(map[interface{}]interface{})["systest-failure-override"],
 			).To(Equal(true))
@@ -559,7 +559,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 
-			Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
+			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
 		})
 
 		It("set credhub reference if credhub_secret_path is set in arbitrary parameters", func() {
@@ -580,7 +580,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(generated.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
+			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
 		})
 
 		It("returns an error when invalid arbitrary parameters are set", func() {
@@ -846,12 +846,12 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 
-			out, err := yaml.Marshal(generated)
+			var expectedManifest bosh.BoshManifest
+			expectedManifestRaw, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
+			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
-			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
-
-			Expect(string(out)).To(Equal(string(expectedManifest)))
+			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
 		It("generates the expected manifest when the old manifest is valid and ignores appended commit hash", func() {
@@ -867,12 +867,12 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 
-			out, err := yaml.Marshal(generated)
+			var expectedManifest bosh.BoshManifest
+			expectedManifestRaw, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
+			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
-			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest.yml"))
-
-			Expect(string(out)).To(Equal(string(expectedManifest)))
+			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
 		It("generates the expected manifest when when arbitrary parameters are present that clash with values in the valid old manifest", func() {
@@ -892,12 +892,12 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 
-			out, err := yaml.Marshal(generated)
+			var expectedManifest bosh.BoshManifest
+			expectedManifestRaw, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest-arbitrary-params.yml"))
+			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
-			expectedManifest, _ := ioutil.ReadFile(getFixturePath("dedicated-plan-updated-manifest-arbitrary-params.yml"))
-
-			Expect(string(out)).To(Equal(string(expectedManifest)))
+			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
 		It("generates the expected manifest when an instance group has been migrated", func() {
@@ -921,8 +921,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
-			Expect(generatedManifest.InstanceGroups[0].Name).To(Equal("redis"))
-			Expect(generatedManifest.InstanceGroups[0].MigratedFrom[0].Name).To(Equal("redis-server"))
+			Expect(generatedManifest.Manifest.InstanceGroups[0].Name).To(Equal("redis"))
+			Expect(generatedManifest.Manifest.InstanceGroups[0].MigratedFrom[0].Name).To(Equal("redis-server"))
 		})
 
 		It("returns an error when an unknown instance group name has been configured", func() {
@@ -964,8 +964,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
-			Expect(generatedManifest.Update.MaxInFlight).To(Equal(4))
-			Expect(generatedManifest.Update.Canaries).To(Equal(4))
+			Expect(generatedManifest.Manifest.Update.MaxInFlight).To(Equal(4))
+			Expect(generatedManifest.Manifest.Update.Canaries).To(Equal(4))
 		})
 
 		It("sets the secret property using the old manifest value when credhub_secret_path not present in arbitrary parameters", func() {
@@ -983,7 +983,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
-			Expect(generatedManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("/some/special/path"))
+			Expect(generatedManifest.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("/some/special/path"))
 		})
 
 		It("sets the expected update block when the plan update block is empty and old manifest exists", func() {
@@ -1002,8 +1002,8 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
-			Expect(generatedManifest.Update.Canaries).To(Equal(1))
-			Expect(generatedManifest.Update.MaxInFlight).To(Equal(1))
+			Expect(generatedManifest.Manifest.Update.Canaries).To(Equal(1))
+			Expect(generatedManifest.Manifest.Update.MaxInFlight).To(Equal(1))
 		})
 
 		Describe("release version tests", func() {
@@ -1198,7 +1198,7 @@ func generateManifest(
 	requestParams map[string]interface{},
 	oldManifest *bosh.BoshManifest,
 	oldPlan *serviceadapter.Plan,
-) (bosh.BoshManifest, error) {
+) (serviceadapter.GenerateManifestOutput, error) {
 
 	return manifestGenerator.GenerateManifest(serviceadapter.ServiceDeployment{
 		DeploymentName: "some-instance-id",
