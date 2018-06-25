@@ -27,8 +27,8 @@ instance_groups:
       maxclients: 47
       password: some-password
       persistence: "yes"
-    secret: ((secret_pass))
-    odb_managed_secret: ((odb_secret:managed_secret))
+      generated_secret: ((secret_pass))
+      odb_managed_secret: ((odb_secret:odb_managed_secret))
 - name: health-check
   lifecycle: errand
   instances: 1

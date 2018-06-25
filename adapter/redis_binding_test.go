@@ -37,7 +37,9 @@ var _ = Describe("Create binding", func() {
 				bosh.InstanceGroup{
 					Properties: map[string]interface{}{
 						"redis": map[interface{}]interface{}{
-							"password": "supersecret",
+							"password":                 "supersecret",
+							adapter.GeneratedSecretKey: path(adapter.GeneratedSecretKey),
+							adapter.ManagedSecretKey:   path(adapter.ManagedSecretKey),
 						},
 					},
 				},
@@ -61,21 +63,29 @@ var _ = Describe("Create binding", func() {
 			Expect(ok).To(BeTrue(), "secret not found in binding.Credentials")
 			Expect(s).To(Equal(secretInBinding))
 		},
-		Entry("without secrets in the manifest", "", serviceadapter.ManifestSecrets{"secret_pass": "p1", adapter.ManagedSecretKey: "another_secret"}, "", nil),
-		Entry("with ((foo)) resolved by the broker", "((foo))", serviceadapter.ManifestSecrets{"secret_pass": "p1", "foo": "{\"status\": \"bar\"}", adapter.ManagedSecretKey: "another_secret"}, "{\"status\": \"bar\"}", nil),
-		Entry("with ((foo)) not resolved by the broker", "((foo))", serviceadapter.ManifestSecrets{"secret_pass": "p1", adapter.ManagedSecretKey: "another_secret"}, "", errors.New("secret 'foo' not present in manifest secrets passed to bind")),
-		Entry("with malformed path: (())", "(())", serviceadapter.ManifestSecrets{"secret_pass": "p1", adapter.ManagedSecretKey: "another_secret"}, "", errors.New("expecting a credhub ref string with format ((xxx)), but got: (())")),
-		Entry("with malformed path: ((foo))((bar))", "((foo))((bar))", serviceadapter.ManifestSecrets{"secret_pass": "p1", adapter.ManagedSecretKey: "another_secret"}, "", errors.New("expecting a credhub ref string with format ((xxx)), but got: ((foo))((bar))")),
-		Entry("with malformed path: foo", "foo", serviceadapter.ManifestSecrets{"secret_pass": "p1", adapter.ManagedSecretKey: "another_secret"}, "", errors.New("expecting a credhub ref string with format ((xxx)), but got: foo")),
-		Entry("with secret_pass not being interpolated", "", serviceadapter.ManifestSecrets{}, "", errors.New("manifest wasn't correctly interpolated: missing value for `secret_pass`")),
-		Entry("with managed_secret not being interpolated", "", serviceadapter.ManifestSecrets{"secret_pass": "p1"}, "", errors.New("manifest wasn't correctly interpolated: missing value for `managed_secret`")),
+		Entry("without secrets in the manifest", "", nil, "", nil),
+		Entry("with ((foo)) resolved by the broker", "((foo))", secretsMap(defaultMap(), "((foo))", "g1"), "g1", nil),
+		Entry("with ((foo)) not resolved by the broker", "((foo))", defaultMap(), "", errors.New("secret 'foo' not present in manifest secrets passed to bind")),
+		Entry("with malformed path: (())", "(())", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: (())")),
+		Entry("with malformed path: ((foo))((bar))", "((foo))((bar))", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: ((foo))((bar))")),
+		Entry("with malformed path: foo", "foo", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: foo")),
+		Entry("with secret_pass not being interpolated", "", serviceadapter.ManifestSecrets{}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.GeneratedSecretKey+"`")),
+		Entry("with managed_secret not being interpolated", "((foo))", serviceadapter.ManifestSecrets{path(adapter.GeneratedSecretKey): "p1"}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.ManagedSecretKey+"`")),
 	)
-
-	It("catches a non-string secret value in the manifest", func() {
-		properties := manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
-		properties["secret"] = 73
-		resolvedSecrets := serviceadapter.ManifestSecrets{"secret_pass": "p", adapter.ManagedSecretKey: "another_secret"}
-		_, err := binder.CreateBinding(bindingID, topology, manifest, params, resolvedSecrets)
-		Expect(err).To(MatchError(errors.New("secret in manifest was not a string. expecting a credhub ref string")))
-	})
 })
+
+func path(s string) string {
+	return "((" + s + "))"
+}
+
+func defaultMap() serviceadapter.ManifestSecrets {
+	return serviceadapter.ManifestSecrets{
+		path(adapter.GeneratedSecretKey): "value1",
+		path(adapter.ManagedSecretKey):   "value2",
+	}
+}
+
+func secretsMap(m serviceadapter.ManifestSecrets, key, value string) serviceadapter.ManifestSecrets {
+	m[key] = value
+	return m
+}

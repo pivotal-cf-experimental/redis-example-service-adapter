@@ -33,8 +33,10 @@ type generatorConfig struct {
 var CurrentPasswordGenerator = randomPasswordGenerator
 
 const (
-	ManagedSecretValue = "Hornswaggle"
-	ManagedSecretKey   = "managed_secret"
+	ManagedSecretValue          = "Hornswaggle"
+	ManagedSecretKey            = "odb_managed_secret"
+	GeneratedSecretKey          = "generated_secret"
+	GeneratedSecretVariableName = "secret_pass"
 )
 
 type ManifestGenerator struct {
@@ -70,8 +72,6 @@ func (m ManifestGenerator) GenerateManifest(
 	}
 
 	stemcellAlias := "only-stemcell"
-	secretVariable := "secret_pass"
-	managedSecretName := ManagedSecretKey
 
 	var err error
 	m.RedisInstanceGroupName, err = m.getRedisInstanceGroupNameFromConfig()
@@ -96,8 +96,6 @@ func (m ManifestGenerator) GenerateManifest(
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
 	}
-	redisProperties["secret"] = "((" + secretVariable + "))"
-	redisProperties["odb_managed_secret"] = "((" + serviceadapter.ODBSecretPrefix + ":" + managedSecretName + "))"
 
 	releases := []bosh.Release{}
 	for _, release := range serviceDeployment.Releases {
@@ -228,7 +226,7 @@ func (m ManifestGenerator) GenerateManifest(
 		Tags: map[string]interface{}{
 			"product": "redis",
 		},
-		Variables: []bosh.Variable{{Name: secretVariable, Type: "password"}},
+		Variables: []bosh.Variable{{Name: GeneratedSecretVariableName, Type: "password"}},
 	}
 	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
 		newManifest.Features.UseShortDNSAddresses = bosh.BoolPointer(useShortDNSAddress == true)
@@ -241,7 +239,7 @@ func (m ManifestGenerator) GenerateManifest(
 	return serviceadapter.GenerateManifestOutput{
 		Manifest: newManifest,
 		ODBManagedSecrets: serviceadapter.ODBManagedSecrets{
-			managedSecretName: ManagedSecretValue,
+			ManagedSecretKey: ManagedSecretValue,
 		},
 	}, nil
 }
@@ -448,9 +446,11 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
 	properties := map[interface{}]interface{}{
-		"persistence": persistence,
-		"password":    password,
-		"maxclients":  maxClients,
+		"persistence":      persistence,
+		"password":         password,
+		"maxclients":       maxClients,
+		GeneratedSecretKey: "((" + GeneratedSecretVariableName + "))",
+		ManagedSecretKey:   "((" + serviceadapter.ODBSecretPrefix + ":" + ManagedSecretKey + "))",
 	}
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
