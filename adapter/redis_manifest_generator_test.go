@@ -562,6 +562,27 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
 		})
 
+		It("uses that value in secrets map when odb_managed_secret is set in arbitrary parameters", func() {
+			requestParams := map[string]interface{}{
+				"parameters": map[string]interface{}{
+					adapter.ManagedSecretKey: "foo",
+				},
+			}
+
+			oldManifest := createDefaultOldManifest()
+
+			generated, _ := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				requestParams,
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generated.ODBManagedSecrets[adapter.ManagedSecretKey]).To(Equal("foo"))
+		})
+
 		It("set credhub reference if credhub_secret_path is set in arbitrary parameters", func() {
 			requestParams := map[string]interface{}{
 				"parameters": map[string]interface{}{

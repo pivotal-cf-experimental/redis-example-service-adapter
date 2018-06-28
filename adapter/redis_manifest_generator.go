@@ -33,7 +33,7 @@ type generatorConfig struct {
 var CurrentPasswordGenerator = randomPasswordGenerator
 
 const (
-	ManagedSecretValue          = "Hornswaggle"
+	ManagedSecretValue          = "HardcodedAdapterValue"
 	ManagedSecretKey            = "odb_managed_secret"
 	GeneratedSecretKey          = "generated_secret"
 	GeneratedSecretVariableName = "secret_pass"
@@ -236,10 +236,16 @@ func (m ManifestGenerator) GenerateManifest(
 			"something_completely_different": somethingCompletelyDifferent,
 		}
 	}
+
+	managedSecretValue := ManagedSecretValue
+	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
+		managedSecretValue = requestParamsOdbManagedSecret.(string)
+	}
+
 	return serviceadapter.GenerateManifestOutput{
 		Manifest: newManifest,
 		ODBManagedSecrets: serviceadapter.ODBManagedSecrets{
-			ManagedSecretKey: ManagedSecretValue,
+			ManagedSecretKey: managedSecretValue,
 		},
 	}, nil
 }
@@ -265,7 +271,7 @@ func (m *ManifestGenerator) getRedisInstanceGroupNameFromConfig() (string, error
 func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
 	var illegalParams []string
 	for k, _ := range arbitraryParams {
-		if k == "maxclients" || k == "credhub_secret_path" {
+		if k == "maxclients" || k == "credhub_secret_path" || k == ManagedSecretKey {
 			continue
 		}
 		illegalParams = append(illegalParams, k)
