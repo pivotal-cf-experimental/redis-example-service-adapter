@@ -449,6 +449,8 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 		return nil, err
 	}
 
+	managedSecretKey := managedSecretKeyForRedisServer(previousRedisProperties)
+
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
 	properties := map[interface{}]interface{}{
@@ -456,7 +458,7 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 		"password":         password,
 		"maxclients":       maxClients,
 		GeneratedSecretKey: "((" + GeneratedSecretVariableName + "))",
-		ManagedSecretKey:   "((" + serviceadapter.ODBSecretPrefix + ":" + ManagedSecretKey + "))",
+		ManagedSecretKey:   managedSecretKey,
 	}
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
@@ -468,6 +470,16 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 	return map[string]interface{}{
 		"redis": properties,
 	}, nil
+}
+
+func managedSecretKeyForRedisServer(previousManifestProperties map[interface{}]interface{}) string {
+	if previousManifestProperties != nil {
+		if managedSecretKey, ok := previousManifestProperties[ManagedSecretKey].(string); ok {
+			return managedSecretKey
+		}
+	}
+
+	return "((" + serviceadapter.ODBSecretPrefix + ":" + ManagedSecretKey + "))"
 }
 
 func passwordForRedisServer(previousManifestProperties map[interface{}]interface{}) (string, error) {

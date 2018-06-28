@@ -1027,6 +1027,23 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedManifest.Manifest.Update.MaxInFlight).To(Equal(1))
 		})
 
+		It("does not generate a manifest with odb prefix when previous manifest contains an existing credhub name", func() {
+			oldManifest := createDefaultOldManifest()
+			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
+
+			manifestOutput, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				&oldManifest,
+				nil,
+			)
+			Expect(generateErr).ToNot(HaveOccurred())
+			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
+			Expect(odbManagedSecret.(string)).To(Equal("((/odb/generated/path/yeee))"))
+		})
+
 		Describe("release version tests", func() {
 			type testInputs struct {
 				oldVersion   string
