@@ -785,7 +785,6 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(stderr).To(gbytes.Say(fmt.Sprintf("Error reading config file from %s", manifestGenerator.ConfigPath)))
 			Expect(generateErr).To(HaveOccurred())
 			Expect(generateErr).To(MatchError(fmt.Sprintf("Error reading config file from %s", manifestGenerator.ConfigPath)))
-
 		})
 
 		It("logs and returns an error when the configuration is not valid YML", func() {
@@ -1042,6 +1041,26 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generateErr).ToNot(HaveOccurred())
 			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
 			Expect(odbManagedSecret.(string)).To(Equal("((/odb/generated/path/yeee))"))
+		})
+
+		It("does not retrieve ODB managed secret from previous manifest when IgnoreODBManagedSecretOnUpdate config flag is true", func() {
+			oldManifest := createDefaultOldManifest()
+			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
+
+			manifestGenerator = createManifestGenerator("ignore-odb-managed-secret-flag-enabled.conf", stderrLogger)
+
+			manifestOutput, generatedErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				map[string]interface{}{},
+				&oldManifest,
+				nil,
+			)
+
+			Expect(generatedErr).NotTo(HaveOccurred())
+			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
+			Expect(odbManagedSecret.(string)).To(Equal("((" + serviceadapter.ODBSecretPrefix + ":" + adapter.ManagedSecretKey + "))"))
 		})
 
 		Describe("release version tests", func() {
