@@ -397,7 +397,11 @@ func gatherJob(releases serviceadapter.ServiceReleases, jobName string) (bosh.Jo
 }
 
 func (m *ManifestGenerator) gatherRedisServerJob(releases serviceadapter.ServiceReleases) (bosh.Job, error) {
-	return gatherJob(releases, RedisJobName)
+	redisServerJob, err := gatherJob(releases, RedisJobName)
+	if err != nil {
+		return bosh.Job{}, errors.New(fmt.Sprintf("error gathering redis server job: %s", err))
+	}
+	return redisServerJob.AddSharedProvidesLink("redis"), nil
 }
 
 func gatherHealthCheckJob(releases serviceadapter.ServiceReleases) (bosh.Job, error) {

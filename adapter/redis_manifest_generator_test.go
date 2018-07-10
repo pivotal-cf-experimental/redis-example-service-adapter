@@ -401,6 +401,22 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.Manifest.Features.UseShortDNSAddresses).To(BeNil())
 		})
 
+		It("always provides a shared link with redis server job", func() {
+			generated, generateErr := generateManifest(
+				manifestGenerator,
+				defaultServiceReleases,
+				dedicatedPlan,
+				defaultRequestParameters,
+				nil,
+				nil,
+			)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			redisServerJob := generated.Manifest.InstanceGroups[0].Jobs[0]
+			Expect(redisServerJob.Name).To(Equal("redis-server"))
+			Expect(redisServerJob.Provides["redis"].Shared).To(BeTrue())
+		})
+
 		It("includes arbitrary feature in bosh features block when property set in plan", func() {
 			dedicatedPlan.Properties["something_completely_different"] = "and_now"
 			oldManifest := createDefaultOldManifest()
@@ -968,6 +984,21 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedErr).To(HaveOccurred())
 			Expect(generatedErr).To(MatchError("Contact your operator, service configuration issue occurred"))
 			Expect(stderr).To(gbytes.Say("no foo instance group definition found"))
+		})
+
+		It("returns an error when the redis server job does not have a release", func() {
+			serviceReleaseWithMissingJobName := defaultServiceReleases
+			serviceReleaseWithMissingJobName[0].Jobs = []string{"overrides-redis-server", "health-check", "cleanup-data"}
+
+			_, generatedErr := generateManifest(
+				manifestGenerator,
+				serviceReleaseWithMissingJobName,
+				dedicatedPlan,
+				map[string]interface{}{},
+				nil,
+				nil,
+			)
+			Expect(generatedErr).To(MatchError("error gathering redis server job: no release provided for job redis-server"))
 		})
 
 		It("sets the expected update block when the plan update block is empty and old manifest does not exist", func() {

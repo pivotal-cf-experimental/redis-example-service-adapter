@@ -12,6 +12,8 @@ instance_groups:
   jobs:
   - name: redis-server
     release: some-release-name
+    provides:
+      redis: { shared: true }
   vm_type: dedicated-vm
   vm_extensions:
   - dedicated-extensions
