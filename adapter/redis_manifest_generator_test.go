@@ -1146,7 +1146,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		})
 
 		JustBeforeEach(func() {
-			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil)
+			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil, nil)
 		})
 
 		Context("has a password in the manifest", func() {

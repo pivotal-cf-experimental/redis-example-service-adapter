@@ -53,7 +53,7 @@ var _ = Describe("Create binding", func() {
 				properties := manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
 				properties["secret"] = secretPath
 			}
-			binding, err := binder.CreateBinding(bindingID, topology, manifest, params, resolvedSecrets)
+			binding, err := binder.CreateBinding(bindingID, topology, manifest, params, resolvedSecrets, serviceadapter.DNSAddresses{})
 			if expectedErr != nil {
 				Expect(err).To(MatchError(expectedErr))
 				return
@@ -72,6 +72,17 @@ var _ = Describe("Create binding", func() {
 		Entry("with secret_pass not being interpolated", "", serviceadapter.ManifestSecrets{}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.GeneratedSecretKey+"`")),
 		Entry("with managed_secret not being interpolated", "((foo))", serviceadapter.ManifestSecrets{path(adapter.GeneratedSecretKey): "p1"}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.ManagedSecretKey+"`")),
 	)
+
+	Describe("binding with DNS", func() {
+		It("produces a binding containing a DNS address", func() {
+			dnsAddresses := serviceadapter.DNSAddresses{"config-1": "this.is.a.dns.address"}
+			binding, err := binder.CreateBinding(bindingID, topology, manifest, params, defaultMap(), dnsAddresses)
+			Expect(err).NotTo(HaveOccurred())
+			s, ok := binding.Credentials["dns_addresses"]
+			Expect(ok).To(BeTrue(), "DNS address not found in binding.Credentials")
+			Expect(s).To(Equal(dnsAddresses))
+		})
+	})
 })
 
 func path(s string) string {

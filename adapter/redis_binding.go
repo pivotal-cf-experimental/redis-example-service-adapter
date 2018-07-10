@@ -14,7 +14,7 @@ type Binder struct {
 	StderrLogger *log.Logger
 }
 
-func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets) (serviceadapter.Binding, error) {
+func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets, dnsAddresses serviceadapter.DNSAddresses) (serviceadapter.Binding, error) {
 	ctx := requestParams.ArbitraryContext()
 	platform := requestParams.Platform()
 	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
@@ -89,6 +89,7 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 			"password":           redisPlanProperties(manifest)["password"].(string),
 			"secret":             secretFromConfigStore,
 			"odb_managed_secret": odbManagedSecret,
+			"dns_addresses":      dnsAddresses,
 		},
 	}, nil
 }
