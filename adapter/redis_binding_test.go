@@ -40,6 +40,10 @@ var _ = Describe("Create binding", func() {
 							"password":                 "supersecret",
 							adapter.GeneratedSecretKey: path(adapter.GeneratedSecretKey),
 							adapter.ManagedSecretKey:   path(adapter.ManagedSecretKey),
+							"ca_cert":                  "((instance_certificate.ca))",
+							"private_key":              "((instance_certificate.private_key))",
+							"certificate":              "((instance_certificate.certificate))",
+							"secret":                   "((default_secret))",
 						},
 					},
 				},
@@ -64,13 +68,12 @@ var _ = Describe("Create binding", func() {
 			Expect(s).To(Equal(secretInBinding))
 		},
 		Entry("without secrets in the manifest", "", nil, "", nil),
-		Entry("with ((foo)) resolved by the broker", "((foo))", secretsMap(defaultMap(), "((foo))", "g1"), "g1", nil),
-		Entry("with ((foo)) not resolved by the broker", "((foo))", defaultMap(), "", errors.New("secret 'foo' not present in manifest secrets passed to bind")),
+		Entry("with ((secret)) resolved by the broker", "((secret))", secretsMap(defaultMap(), "((secret))", "g1"), "g1", nil),
+		Entry("with ((foo)) not resolved by the broker", "((foo))", defaultMap(), "", errors.New("manifest wasn't correctly interpolated: missing value for `((foo))`")),
 		Entry("with malformed path: (())", "(())", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: (())")),
-		Entry("with malformed path: ((foo))((bar))", "((foo))((bar))", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: ((foo))((bar))")),
 		Entry("with malformed path: foo", "foo", defaultMap(), "", errors.New("expecting a credhub ref string with format ((xxx)), but got: foo")),
-		Entry("with secret_pass not being interpolated", "", serviceadapter.ManifestSecrets{}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.GeneratedSecretKey+"`")),
-		Entry("with managed_secret not being interpolated", "((foo))", serviceadapter.ManifestSecrets{path(adapter.GeneratedSecretKey): "p1"}, "", errors.New("manifest wasn't correctly interpolated: missing value for `"+adapter.ManagedSecretKey+"`")),
+		Entry("with secret_pass not being interpolated", "", serviceadapter.ManifestSecrets{}, "", errors.New("manifest wasn't correctly interpolated: missing value for `(("+adapter.GeneratedSecretKey+"))`")),
+		Entry("with managed_secret not being interpolated", "", serviceadapter.ManifestSecrets{path(adapter.GeneratedSecretKey): "p1"}, "", errors.New("manifest wasn't correctly interpolated: missing value for `(("+adapter.ManagedSecretKey+"))`")),
 	)
 
 	Describe("binding with DNS", func() {
@@ -91,8 +94,12 @@ func path(s string) string {
 
 func defaultMap() serviceadapter.ManifestSecrets {
 	return serviceadapter.ManifestSecrets{
-		path(adapter.GeneratedSecretKey): "value1",
-		path(adapter.ManagedSecretKey):   "value2",
+		path(adapter.GeneratedSecretKey):       "value1",
+		path(adapter.ManagedSecretKey):         "value2",
+		"((instance_certificate.ca))":          "ca-val",
+		"((instance_certificate.private_key))": "priv-val",
+		"((instance_certificate.certificate))": "priv-val",
+		"((default_secret))":                   "sec-value",
 	}
 }
 

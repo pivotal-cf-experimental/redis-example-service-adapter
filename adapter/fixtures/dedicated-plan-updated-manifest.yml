@@ -31,6 +31,9 @@ instance_groups:
       persistence: "yes"
       generated_secret: ((secret_pass))
       odb_managed_secret: ((odb_secret:odb_managed_secret))
+      ca_cert: ((instance_certificate.ca))
+      certificate: ((instance_certificate.certificate))
+      private_key: ((instance_certificate.private_key))
 - name: health-check
   lifecycle: errand
   instances: 1
@@ -67,6 +70,11 @@ update:
 variables:
 - name: secret_pass
   type: password
+- name: instance_certificate
+  type: certificate
+  options:
+    is_ca: true
+    common_name: redis
 tags:
   product: redis
 properties: {}

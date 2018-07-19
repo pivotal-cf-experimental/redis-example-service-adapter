@@ -39,6 +39,7 @@ const (
 	IgnoreSecretKey             = "ignore_secret"
 	GeneratedSecretKey          = "generated_secret"
 	GeneratedSecretVariableName = "secret_pass"
+	CertificateVariableName     = "instance_certificate"
 )
 
 type ManifestGenerator struct {
@@ -232,7 +233,10 @@ func (m ManifestGenerator) GenerateManifest(
 		Tags: map[string]interface{}{
 			"product": "redis",
 		},
-		Variables: []bosh.Variable{{Name: GeneratedSecretVariableName, Type: "password"}},
+		Variables: []bosh.Variable{
+			{Name: GeneratedSecretVariableName, Type: "password"},
+			{Name: CertificateVariableName, Type: "certificate", Options: map[string]interface{}{"is_ca": true, "common_name": "redis"}},
+		},
 	}
 	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
 		newManifest.Features.UseShortDNSAddresses = bosh.BoolPointer(useShortDNSAddress == true)
@@ -469,6 +473,9 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 		"maxclients":       maxClients,
 		GeneratedSecretKey: "((" + GeneratedSecretVariableName + "))",
 		ManagedSecretKey:   managedSecretKey,
+		"ca_cert":          "((" + CertificateVariableName + ".ca))",
+		"certificate":      "((" + CertificateVariableName + ".certificate))",
+		"private_key":      "((" + CertificateVariableName + ".private_key))",
 	}
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
