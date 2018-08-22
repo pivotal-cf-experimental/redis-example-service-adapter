@@ -84,7 +84,13 @@ func (m ManifestGenerator) GenerateManifest(
 	}
 
 	m.RedisInstanceGroupName = config.RedisInstanceGroupName
+
 	m.IgnoreODBManagedSecretOnUpdate = config.IgnoreODBManagedSecretOnUpdate
+	managedSecretValue := ManagedSecretValue
+	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
+		managedSecretValue = requestParamsOdbManagedSecret.(string)
+		m.IgnoreODBManagedSecretOnUpdate = true
+	}
 
 	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
 	if redisServerInstanceGroup == nil {
@@ -245,11 +251,6 @@ func (m ManifestGenerator) GenerateManifest(
 		newManifest.Features.ExtraFeatures = map[string]interface{}{
 			"something_completely_different": somethingCompletelyDifferent,
 		}
-	}
-
-	managedSecretValue := ManagedSecretValue
-	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
-		managedSecretValue = requestParamsOdbManagedSecret.(string)
 	}
 
 	return serviceadapter.GenerateManifestOutput{
