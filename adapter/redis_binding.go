@@ -1,17 +1,24 @@
 package adapter
 
 import (
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"regexp"
 
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
+	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Binder struct {
 	StderrLogger *log.Logger
+	Config       BindConfig
+}
+
+type BindConfig struct {
+	SecureManifestsEnabled bool `yaml:"secure_manifests_enabled"`
 }
 
 func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets, dnsAddresses serviceadapter.DNSAddresses) (serviceadapter.Binding, error) {
@@ -93,8 +100,47 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 	}, nil
 }
 
-func (b Binder) DeleteBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters) error {
+func (b Binder) DeleteBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets) error {
+	if !b.Config.SecureManifestsEnabled {
+		if len(secrets) != 0 {
+			return errors.New("DeleteBinding received secrets when secure manifests are disabled")
+		}
+		return nil
+	}
+
+	actualSecretValue, ok := secrets["(("+GeneratedSecretVariableName+"))"]
+	if !ok {
+		return errors.New("The required secret was not provided to DeleteBinding")
+	}
+
+	secretIsValid := simulatedLoginToRedisSucceeds(actualSecretValue)
+	if !secretIsValid {
+		return errors.New("The incorrect secret value was provided to DeleteBinding")
+	}
 	return nil
+}
+
+func LoadConfig(path string, logger *log.Logger) (BindConfig, error) {
+	config := BindConfig{}
+
+	ymlFile, err := ioutil.ReadFile(path)
+	if err != nil {
+		wrappedErr := errors.Wrap(err, "Error, could not find config file")
+		logger.Println(wrappedErr.Error())
+		return BindConfig{}, wrappedErr
+	}
+
+	err = yaml.Unmarshal(ymlFile, &config)
+	if err != nil {
+		wrappedErr := errors.Wrap(err, "Error, could not parse config YAML")
+		logger.Println(wrappedErr.Error())
+		return BindConfig{}, wrappedErr
+	}
+	return config, nil
+}
+
+func simulatedLoginToRedisSucceeds(password string) bool {
+	return len(password) > 0
 }
 
 func getRedisHost(deploymentTopology bosh.BoshVMs) (string, error) {
