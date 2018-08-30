@@ -2,13 +2,11 @@ package adapter_test
 
 import (
 	"errors"
-	"io"
 	"log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/redis-example-service-adapter/adapter"
 
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
@@ -16,45 +14,6 @@ import (
 )
 
 var _ = Describe("Binding", func() {
-
-	Describe("Config", func() {
-		var (
-			stderr       = gbytes.NewBuffer()
-			stderrLogger *log.Logger
-		)
-
-		BeforeEach(func() {
-			stderrLogger = log.New(io.MultiWriter(stderr, GinkgoWriter), "create-binding", log.LstdFlags)
-		})
-
-		It("can load config from file", func() {
-			configFilePath := "fixtures/binding-config-manifest-secrets-enabled.yml"
-			config, err := adapter.LoadConfig(configFilePath, stderrLogger)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(config.SecureManifestsEnabled).To(BeTrue())
-		})
-
-		It("can load config from file with manifest secrets disabled", func() {
-			configFilePath := "fixtures/binding-config-manifest-secrets-disabled.yml"
-			config, err := adapter.LoadConfig(configFilePath, stderrLogger)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(config.SecureManifestsEnabled).To(BeFalse())
-		})
-
-		It("errors when the config file does not exist", func() {
-			configFilePath := "fixtures/does-not-exist.yml"
-			_, err := adapter.LoadConfig(configFilePath, stderrLogger)
-			Expect(err).To(MatchError(ContainSubstring("Error, could not find config file")))
-			Expect(stderr).To(gbytes.Say("Error, could not find config file"))
-		})
-
-		It("errors when the config file is invalid", func() {
-			configFilePath := "fixtures/binding-config-invalid.yml"
-			_, err := adapter.LoadConfig(configFilePath, stderrLogger)
-			Expect(err).To(MatchError(ContainSubstring("Error, could not parse config YAML")))
-			Expect(stderr).To(gbytes.Say("Error, could not parse config YAML"))
-		})
-	})
 
 	Describe("Create binding", func() {
 		var (

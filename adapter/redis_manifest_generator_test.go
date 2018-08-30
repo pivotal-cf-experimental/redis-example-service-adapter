@@ -11,8 +11,6 @@ import (
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 
 	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -38,6 +36,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		highMemoryPlan           serviceadapter.Plan
 		stderr                   *gbytes.Buffer
 		stderrLogger             *log.Logger
+		config                   adapter.Config
 	)
 
 	BeforeEach(func() {
@@ -116,7 +115,8 @@ var _ = Describe("Redis Service Adapter", func() {
 		stderr = gbytes.NewBuffer()
 		stderrLogger = log.New(io.MultiWriter(stderr, GinkgoWriter), "", log.LstdFlags)
 
-		manifestGenerator = createManifestGenerator("redis-example-service-adapter.conf", stderrLogger)
+		config.RedisInstanceGroupName = "redis-server"
+		manifestGenerator = adapter.ManifestGenerator{Config: config, StderrLogger: stderrLogger}
 
 		binder = adapter.Binder{StderrLogger: stderrLogger}
 	})
@@ -784,45 +784,6 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(stderr).To(gbytes.Say("the plan property 'persistence' is missing"))
 		})
 
-		It("logs and returns an error when the configuration does not exists", func() {
-			oldManifest := createDefaultOldManifest()
-
-			manifestGenerator = createManifestGenerator("/foobar.conf", stderrLogger)
-
-			_, generateErr := generateManifest(
-				manifestGenerator,
-				defaultServiceReleases,
-				dedicatedPlan,
-				defaultRequestParameters,
-				&oldManifest,
-				nil,
-			)
-
-			Expect(stderr).To(gbytes.Say(fmt.Sprintf("Error reading config file from %s", manifestGenerator.ConfigPath)))
-			Expect(generateErr).To(HaveOccurred())
-			Expect(generateErr).To(MatchError(fmt.Sprintf("Error reading config file from %s", manifestGenerator.ConfigPath)))
-		})
-
-		It("logs and returns an error when the configuration is not valid YML", func() {
-			oldManifest := createDefaultOldManifest()
-
-			manifestGenerator = createManifestGenerator("broken-redis-example-service-adapter.conf", stderrLogger)
-
-			_, generateErr := generateManifest(
-				manifestGenerator,
-				defaultServiceReleases,
-				dedicatedPlan,
-				defaultRequestParameters,
-				&oldManifest,
-				nil,
-			)
-
-			Expect(stderr).To(gbytes.Say("Error unmarshalling config"))
-			Expect(generateErr).To(HaveOccurred())
-			Expect(generateErr).To(MatchError("Error unmarshalling config"))
-
-		})
-
 		It("returns an error when the new release version (of the release that provides redis-server) cannot be parsed", func() {
 			defaultServiceReleases[0].Version = "oi"
 
@@ -939,7 +900,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		It("generates the expected manifest when an instance group has been migrated", func() {
 			oldManifest := createDefaultOldManifest()
 
-			manifestGenerator = createManifestGenerator("redis-example-service-adapter-updated.conf", stderrLogger)
+			manifestGenerator.Config.RedisInstanceGroupName = "redis"
 
 			updatedDedicatedPlan := dedicatedPlan
 			updatedDedicatedPlan.InstanceGroups[0].Name = "redis"
@@ -964,7 +925,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		It("returns an error when an unknown instance group name has been configured", func() {
 			oldManifest := createDefaultOldManifest()
 
-			manifestGenerator = createManifestGenerator("redis-example-service-adapter-missing.conf", stderrLogger)
+			manifestGenerator.Config.RedisInstanceGroupName = "foo"
 
 			updatedDedicatedPlan := dedicatedPlan
 			updatedDedicatedPlan.InstanceGroups[0].Name = "redis"
@@ -1078,7 +1039,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			oldManifest := createDefaultOldManifest()
 			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
 
-			manifestGenerator = createManifestGenerator("ignore-odb-managed-secret-flag-enabled.conf", stderrLogger)
+			manifestGenerator.Config.IgnoreODBManagedSecretOnUpdate = true
 
 			manifestOutput, generatedErr := generateManifest(
 				manifestGenerator,
@@ -1236,13 +1197,6 @@ var _ = Describe("Redis Service Adapter", func() {
 	})
 })
 
-func createManifestGenerator(filename string, logger *log.Logger) adapter.ManifestGenerator {
-	return adapter.ManifestGenerator{
-		StderrLogger: logger,
-		ConfigPath:   getFixturePath(filename),
-	}
-}
-
 func createDefaultEmptyManifest() bosh.BoshManifest {
 	return bosh.BoshManifest{}
 }
@@ -1261,12 +1215,6 @@ func createDefaultOldManifest() bosh.BoshManifest {
 				},
 			}}},
 	}
-}
-
-func getFixturePath(filename string) string {
-	cwd, err := os.Getwd()
-	Expect(err).ToNot(HaveOccurred())
-	return filepath.Join(cwd, "fixtures", filename)
 }
 
 func planWithPropertyRemoved(plan serviceadapter.Plan, property string) serviceadapter.Plan {

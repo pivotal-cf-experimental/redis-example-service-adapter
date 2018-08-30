@@ -10,11 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"io/ioutil"
-
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -25,11 +22,6 @@ const (
 	CleanupDataErrandName             = "cleanup-data"
 	LifecycleErrandType               = "errand"
 )
-
-type generatorConfig struct {
-	RedisInstanceGroupName         string `yaml:"redis_instance_group_name"`
-	IgnoreODBManagedSecretOnUpdate bool   `yaml:"ignore_odb_managed_secret_on_update"`
-}
 
 var CurrentPasswordGenerator = randomPasswordGenerator
 
@@ -43,10 +35,8 @@ const (
 )
 
 type ManifestGenerator struct {
-	StderrLogger                   *log.Logger
-	ConfigPath                     string
-	RedisInstanceGroupName         string
-	IgnoreODBManagedSecretOnUpdate bool
+	StderrLogger *log.Logger
+	Config       Config
 }
 
 func (m ManifestGenerator) GenerateManifest(
@@ -78,23 +68,15 @@ func (m ManifestGenerator) GenerateManifest(
 	stemcellAlias := "only-stemcell"
 
 	var err error
-	config, err := m.marshalGeneratorConfig()
-	if err != nil {
-		return serviceadapter.GenerateManifestOutput{}, err
-	}
-
-	m.RedisInstanceGroupName = config.RedisInstanceGroupName
-
-	m.IgnoreODBManagedSecretOnUpdate = config.IgnoreODBManagedSecretOnUpdate
 	managedSecretValue := ManagedSecretValue
 	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
 		managedSecretValue = requestParamsOdbManagedSecret.(string)
-		m.IgnoreODBManagedSecretOnUpdate = true
+		m.Config.IgnoreODBManagedSecretOnUpdate = true
 	}
 
 	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
 	if redisServerInstanceGroup == nil {
-		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", m.RedisInstanceGroupName))
+		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", m.Config.RedisInstanceGroupName))
 		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
@@ -261,24 +243,6 @@ func (m ManifestGenerator) GenerateManifest(
 	}, nil
 }
 
-func (m *ManifestGenerator) marshalGeneratorConfig() (generatorConfig, error) {
-	generatorConfig := generatorConfig{}
-
-	ymlFile, err := ioutil.ReadFile(m.ConfigPath)
-	if err != nil {
-		m.StderrLogger.Println(fmt.Sprintf("Error reading config file from %s", m.ConfigPath))
-		return generatorConfig, errors.New(fmt.Sprintf("Error reading config file from %s", m.ConfigPath))
-	}
-
-	err = yaml.Unmarshal(ymlFile, &generatorConfig)
-	if err != nil {
-		m.StderrLogger.Println("Error unmarshalling config")
-		return generatorConfig, errors.New("Error unmarshalling config")
-	}
-
-	return generatorConfig, nil
-}
-
 func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
 	var illegalParams []string
 	for k, _ := range arbitraryParams {
@@ -322,7 +286,7 @@ func findInstanceGroup(plan serviceadapter.Plan, instanceGroupName string) *serv
 }
 
 func (m *ManifestGenerator) findRedisServerInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
-	return findInstanceGroup(plan, m.RedisInstanceGroupName)
+	return findInstanceGroup(plan, m.Config.RedisInstanceGroupName)
 }
 
 func findHealthCheckInstanceGroup(plan serviceadapter.Plan) *serviceadapter.InstanceGroup {
@@ -464,7 +428,7 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 		return nil, err
 	}
 
-	managedSecretKey := managedSecretKeyForRedisServer(previousRedisProperties, m.IgnoreODBManagedSecretOnUpdate)
+	managedSecretKey := managedSecretKeyForRedisServer(previousRedisProperties, m.Config.IgnoreODBManagedSecretOnUpdate)
 
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
