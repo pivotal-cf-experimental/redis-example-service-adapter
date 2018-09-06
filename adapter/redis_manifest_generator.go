@@ -223,7 +223,20 @@ func (m ManifestGenerator) GenerateManifest(
 		},
 		Variables: []bosh.Variable{
 			{Name: GeneratedSecretVariableName, Type: "password"},
-			{Name: CertificateVariableName, Type: "certificate", Options: map[string]interface{}{"is_ca": true, "common_name": "redis"}},
+			{
+				Name:    CertificateVariableName,
+				Type:    "certificate",
+				Options: map[string]interface{}{"is_ca": true, "common_name": "redis"},
+				Consumes: &bosh.VariableConsumes{
+					AlternativeName: bosh.VariableConsumesLink{
+						From:       "redis-server-link",
+						Properties: map[string]interface{}{"wildcard": true},
+					},
+					CommonName: bosh.VariableConsumesLink{
+						From: "redis-server-link",
+					},
+				},
+			},
 		},
 	}
 	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
@@ -370,6 +383,7 @@ func (m *ManifestGenerator) gatherRedisServerJob(releases serviceadapter.Service
 	if err != nil {
 		return bosh.Job{}, errors.New(fmt.Sprintf("error gathering redis server job: %s", err))
 	}
+	redisServerJob = redisServerJob.AddCustomProviderDefinition("redis-server-link", "address", nil)
 	return redisServerJob.AddSharedProvidesLink("redis"), nil
 }
 

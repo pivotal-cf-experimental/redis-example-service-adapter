@@ -872,7 +872,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
-		It("generates the expected manifest when when arbitrary parameters are present that clash with values in the valid old manifest", func() {
+		It("generates the expected manifest when arbitrary parameters are present that clash with values in the valid old manifest", func() {
 			oldManifest := createDefaultOldManifest()
 			oldManifest.Releases[0].Version = "1"
 
