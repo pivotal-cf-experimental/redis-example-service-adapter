@@ -978,6 +978,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedErr).ToNot(HaveOccurred())
 			Expect(generatedManifest.Manifest.Update.MaxInFlight).To(Equal(4))
 			Expect(generatedManifest.Manifest.Update.Canaries).To(Equal(4))
+			Expect(generatedManifest.Manifest.Update.VmStrategy).To(Equal("create-swap-delete"))
 		})
 
 		It("sets the secret property using the old manifest value when credhub_secret_path not present in arbitrary parameters", func() {
@@ -1016,6 +1017,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generatedErr).ToNot(HaveOccurred())
 			Expect(generatedManifest.Manifest.Update.Canaries).To(Equal(1))
 			Expect(generatedManifest.Manifest.Update.MaxInFlight).To(Equal(1))
+			Expect(generatedManifest.Manifest.Update.VmStrategy).To(Equal("create-swap-delete"))
 		})
 
 		It("does not generate a manifest with odb prefix when previous manifest contains an existing credhub name", func() {
