@@ -54,7 +54,7 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:f7972020aa715891374f50b4619442cbde533fa35f2ced3756a4f597c85ad191"
+  digest = "1:843aac8325c3be216084cdbcd447e6af21f62d4528ce67c8b43d17e1c8c2412b"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -73,19 +73,19 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
-  version = "v1.3.0"
+  revision = "334b8f472b3af5d541c5642701c1e29e2126f486"
+  version = "v1.1.0"
 
 [[projects]]
-  digest = "1:8f1c30a8c970e49e491c6ff2f01267eeb7525a0a04c7cc1e178f0a11402b71e1"
+  digest = "1:a0bbd7697b80044c9cd0401bc444db4236e7b9c1c1a077681aba640722d1073e"
   name = "github.com/pivotal-cf/brokerapi"
   packages = [
     ".",
     "auth",
   ]
   pruneopts = "UT"
-  revision = "1d947bc993fc9a770418577540bebabb8657980a"
-  version = "v2.0.5"
+  revision = "036a459c44d734d73447be166f90d407e5602094"
+  version = "v3.0.1"
 
 [[projects]]
   branch = "master"
@@ -96,7 +96,7 @@
     "serviceadapter",
   ]
   pruneopts = "UT"
-  revision = "a06c5dda7ab40eaa0be5dbe636cdace1f545e57f"
+  revision = "19ab2acafc755a5bb4c283ad5577c35a4bec43c1"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
@@ -108,49 +108,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0016922c9d04af9df4c4af9ca2b7f3f8abfa85fa510fbc4d1fb09e54cb2e63c3"
-  name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset",
-  ]
-  pruneopts = "UT"
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
-
-[[projects]]
-  branch = "master"
   digest = "1:b06c5fef67f2764fc1e39306d34c44db8a16f819eaad825eff9c104a841bd44c"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
   revision = "ef802241c90f84d84d644a2d8d0de8ee96038c9c"
-
-[[projects]]
-  branch = "master"
-  digest = "1:aa4d6967a3237f8367b6bf91503964a77183ecf696f1273e8ad3551bb4412b5f"
-  name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr",
-  ]
-  pruneopts = "UT"
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
   digest = "1:cbc72c4c4886a918d6ab4b95e347ffe259846260f99ebdd8a198c2331cf2b2e9"
