@@ -358,7 +358,7 @@ func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.B
 			CanaryWatchTime: "30000-240000",
 			UpdateWatchTime: "30000-240000",
 			MaxInFlight:     4,
-			VmStrategy:      "create-swap-delete",
+			VmStrategy:      "delete-create",
 		}
 
 		if previousManifest == nil {
