@@ -130,6 +130,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -151,6 +152,7 @@ var _ = Describe("Redis Service Adapter", func() {
 						highMemoryPlan,
 						params,
 						&oldManifest,
+						nil,
 						nil,
 					)
 					Expect(generateErr).NotTo(HaveOccurred())
@@ -184,6 +186,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					highMemoryPlan,
 					params,
 					&oldManifest,
+					nil,
 					nil,
 				)
 				Expect(generateErr).NotTo(HaveOccurred())
@@ -242,6 +245,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -287,6 +291,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				colocatedPostDeployPlan,
 				defaultRequestParameters,
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -338,6 +343,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -358,6 +364,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -376,6 +383,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -393,6 +401,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -405,6 +414,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultServiceReleases,
 				dedicatedPlan,
 				defaultRequestParameters,
+				nil,
 				nil,
 				nil,
 			)
@@ -425,6 +435,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				dedicatedPlan,
 				defaultRequestParameters,
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -476,6 +487,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					defaultRequestParameters,
 					&oldManifest,
 					nil,
+					nil,
 				)
 
 				Expect(generateErr).NotTo(HaveOccurred())
@@ -496,6 +508,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					plan,
 					defaultRequestParameters,
 					&oldManifest,
+					nil,
 					nil,
 				)
 
@@ -545,6 +558,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).NotTo(HaveOccurred())
@@ -571,6 +585,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				requestParams,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
@@ -591,6 +606,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				dedicatedPlan,
 				requestParams,
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -613,6 +629,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				requestParams,
 				&oldManifest,
 				nil,
+				nil,
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
@@ -631,6 +648,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				dedicatedPlan,
 				invalidRequestParams,
 				&oldManifest,
+				nil,
 				nil,
 			)
 			Expect(generateErr).To(MatchError(ContainSubstring("foo")))
@@ -657,6 +675,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				dedicatedPlan,
 				defaultRequestParameters,
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -688,6 +707,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).To(HaveOccurred())
@@ -715,6 +735,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).To(HaveOccurred())
@@ -740,6 +761,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).To(MatchError(fmt.Sprintf("job %s defined in multiple releases: some-release-name, some-other-release", ProvidedRedisServerInstanceGroupName)))
@@ -759,6 +781,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generateErr).To(HaveOccurred())
@@ -775,6 +798,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				planWithPropertyRemoved(dedicatedPlan, "persistence"),
 				defaultRequestParameters,
 				&oldManifest,
+				nil,
 				nil,
 			)
 			Expect(generateErr).To(HaveOccurred())
@@ -794,6 +818,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 			Expect(generateErr).To(MatchError("oi is not a valid BOSH release version"))
 		})
@@ -808,6 +833,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				dedicatedPlan,
 				defaultRequestParameters,
 				&oldManifest,
+				nil,
 				nil,
 			)
 			Expect(generateErr).To(MatchError("oi is not a valid BOSH release version"))
@@ -824,6 +850,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 			Expect(generateErr).To(MatchError("no release with name some-release-name found in previous manifest"))
 		})
@@ -839,6 +866,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			var expectedManifest bosh.BoshManifest
@@ -846,6 +874,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
+			removePlanSecret(generated.Manifest)
 			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
@@ -860,6 +889,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			var expectedManifest bosh.BoshManifest
@@ -867,6 +897,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
+			removePlanSecret(generated.Manifest)
 			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
@@ -885,6 +916,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				},
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			var expectedManifest bosh.BoshManifest
@@ -892,6 +924,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			err := yaml.Unmarshal(expectedManifestRaw, &expectedManifest)
 			Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
+			removePlanSecret(generated.Manifest)
 			Expect(generated.Manifest).To(Equal(expectedManifest))
 		})
 
@@ -912,6 +945,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				updatedDedicatedPlan,
 				map[string]interface{}{},
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -938,6 +972,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				map[string]interface{}{},
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generatedErr).To(HaveOccurred())
@@ -956,6 +991,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				map[string]interface{}{},
 				nil,
 				nil,
+				nil,
 			)
 			Expect(generatedErr).To(MatchError("error gathering redis server job: no release provided for job redis-server"))
 		})
@@ -969,6 +1005,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultServiceReleases,
 				planWithoutUpdateBlock,
 				map[string]interface{}{},
+				nil,
 				nil,
 				nil,
 			)
@@ -991,6 +1028,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				emptyArbitraryParams,
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
@@ -1009,6 +1047,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				planWithoutUpdateBlock,
 				map[string]interface{}{},
 				&oldManifest,
+				nil,
 				nil,
 			)
 
@@ -1029,6 +1068,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				defaultRequestParameters,
 				&oldManifest,
 				nil,
+				nil,
 			)
 			Expect(generateErr).ToNot(HaveOccurred())
 			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
@@ -1048,11 +1088,116 @@ var _ = Describe("Redis Service Adapter", func() {
 				map[string]interface{}{},
 				&oldManifest,
 				nil,
+				nil,
 			)
 
 			Expect(generatedErr).NotTo(HaveOccurred())
 			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
 			Expect(odbManagedSecret.(string)).To(Equal("((" + serviceadapter.ODBSecretPrefix + ":" + adapter.ManagedSecretKey + "))"))
+		})
+
+		Describe("when regenerating a manifest that contains a ODB managed secret", func() {
+			var (
+				oldManifest    bosh.BoshManifest
+				planWithSecret serviceadapter.Plan
+			)
+
+			BeforeEach(func() {
+				oldManifest = createDefaultOldManifest()
+				oldManifest.InstanceGroups[0].Name = config.RedisInstanceGroupName
+				oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"] = "((/odb/managed/path/to/plan_secret))"
+
+				planWithSecret = serviceadapter.Plan{
+					Properties: map[string]interface{}{
+						"plan_secret": "plansecret",
+						"persistence": true,
+					},
+					InstanceGroups: []serviceadapter.InstanceGroup{{Name: config.RedisInstanceGroupName}},
+				}
+			})
+
+			getSecretKey := func(secrets serviceadapter.ODBManagedSecrets, expectedSecret string) string {
+				for key, val := range secrets {
+					if val == expectedSecret {
+						return key
+					}
+				}
+				return ""
+			}
+
+			It("reuses the credhub path from the old manifest when the secret is unchanged", func() {
+				existingSecretCredhubPath := "((/odb/managed/path/to/plan_secret))"
+				oldSecrets := serviceadapter.ManifestSecrets{existingSecretCredhubPath: "plansecret"}
+				manifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithSecret,
+					map[string]interface{}{},
+					&oldManifest,
+					&planWithSecret,
+					oldSecrets,
+				)
+				Expect(err).NotTo(HaveOccurred())
+
+				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				Expect(actualSecret).To(Equal(existingSecretCredhubPath))
+
+				_, isSet := manifestOutput.ODBManagedSecrets["plan_secret"]
+				Expect(isSet).To(BeFalse())
+			})
+
+			It("inserts a new odb_secret when the secret has changed", func() {
+				existingSecretCredhubPath := "((/odb/managed/path/to/plan_secret))"
+				oldSecrets := serviceadapter.ManifestSecrets{existingSecretCredhubPath: "different_secret"}
+				manifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithSecret,
+					map[string]interface{}{},
+					&oldManifest,
+					&planWithSecret,
+					oldSecrets,
+				)
+				Expect(err).NotTo(HaveOccurred())
+
+				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+
+				secretKey := getSecretKey(manifestOutput.ODBManagedSecrets, "plansecret")
+				Expect(secretKey).ToNot(BeEmpty())
+				Expect(actualSecret).To(Equal("((odb_secret:" + secretKey + "))"))
+				Expect(manifestOutput.ODBManagedSecrets[secretKey]).To(Equal("plansecret"))
+			})
+
+			It("does not reuse the odb secret name when regenerating a secret", func() {
+				provisionManifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithSecret,
+					map[string]interface{}{},
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				provisionSecretKey := getSecretKey(provisionManifestOutput.ODBManagedSecrets, "plansecret")
+
+				existingSecretCredhubPath := "((/odb/managed/path/to/plan_secret))"
+				oldSecrets := serviceadapter.ManifestSecrets{existingSecretCredhubPath: "different_secret"}
+				updateManifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithSecret,
+					map[string]interface{}{},
+					&oldManifest,
+					&planWithSecret,
+					oldSecrets,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				updateSecretKey := getSecretKey(updateManifestOutput.ODBManagedSecrets, "plansecret")
+
+				Expect(provisionSecretKey).ToNot(Equal(updateSecretKey))
+			})
+
 		})
 
 		Describe("release version tests", func() {
@@ -1086,6 +1231,7 @@ var _ = Describe("Redis Service Adapter", func() {
 							dedicatedPlan,
 							defaultRequestParameters,
 							&oldManifest,
+							nil,
 							nil,
 						)
 						if t.returnsError {
@@ -1155,6 +1301,7 @@ func generateManifest(
 	requestParams map[string]interface{},
 	oldManifest *bosh.BoshManifest,
 	oldPlan *serviceadapter.Plan,
+	oldSecrets serviceadapter.ManifestSecrets,
 ) (serviceadapter.GenerateManifestOutput, error) {
 
 	return manifestGenerator.GenerateManifest(serviceadapter.ServiceDeployment{
@@ -1164,7 +1311,7 @@ func generateManifest(
 			Version: "1234",
 		},
 		Releases: serviceReleases,
-	}, plan, requestParams, oldManifest, oldPlan)
+	}, plan, requestParams, oldManifest, oldPlan, oldSecrets)
 }
 
 func containsJobName(list []bosh.Job, query string) bool {
@@ -1174,4 +1321,8 @@ func containsJobName(list []bosh.Job, query string) bool {
 		}
 	}
 	return false
+}
+
+func removePlanSecret(manifest bosh.BoshManifest) {
+	delete(manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{}), "plan_secret")
 }

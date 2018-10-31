@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pborman/uuid"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
@@ -45,14 +46,14 @@ func (m ManifestGenerator) GenerateManifest(
 	requestParams serviceadapter.RequestParameters,
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
+	previousSecrets serviceadapter.ManifestSecrets,
 ) (serviceadapter.GenerateManifestOutput, error) {
 
 	ctx := requestParams.ArbitraryContext()
 	platform := requestParams.Platform()
-	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
+	if len(ctx) == 0 || platform != "cloudfoundry" {
 		m.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
 	}
-
 	arbitraryParameters := requestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
@@ -80,6 +81,8 @@ func (m ManifestGenerator) GenerateManifest(
 		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
+	newSecrets := serviceadapter.ODBManagedSecrets{}
+
 	redisServerNetworks := mapNetworksToBoshNetworks(redisServerInstanceGroup.Networks)
 
 	redisProperties, err := m.redisServerProperties(
@@ -87,6 +90,8 @@ func (m ManifestGenerator) GenerateManifest(
 		plan.Properties,
 		arbitraryParameters,
 		previousManifest,
+		newSecrets,
+		previousSecrets,
 	)
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
@@ -247,12 +252,11 @@ func (m ManifestGenerator) GenerateManifest(
 			"something_completely_different": somethingCompletelyDifferent,
 		}
 	}
+	newSecrets[ManagedSecretKey] = managedSecretValue
 
 	return serviceadapter.GenerateManifestOutput{
-		Manifest: newManifest,
-		ODBManagedSecrets: serviceadapter.ODBManagedSecrets{
-			ManagedSecretKey: managedSecretValue,
-		},
+		Manifest:          newManifest,
+		ODBManagedSecrets: newSecrets,
 	}, nil
 }
 
@@ -427,7 +431,13 @@ func redisPlanProperties(manifest bosh.BoshManifest) map[interface{}]interface{}
 	return manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
 }
 
-func (m ManifestGenerator) redisServerProperties(deploymentName string, planProperties serviceadapter.Properties, arbitraryParams map[string]interface{}, previousManifest *bosh.BoshManifest) (map[string]interface{}, error) {
+func (m ManifestGenerator) redisServerProperties(
+	deploymentName string,
+	planProperties serviceadapter.Properties,
+	arbitraryParams map[string]interface{},
+	previousManifest *bosh.BoshManifest,
+	newSecrets serviceadapter.ODBManagedSecrets,
+	previousSecrets serviceadapter.ManifestSecrets) (map[string]interface{}, error) {
 	var previousRedisProperties map[interface{}]interface{}
 	if previousManifest != nil {
 		previousRedisProperties = redisPlanProperties(*previousManifest)
@@ -447,6 +457,17 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
+	secretKey := "plan_secret_key" + uuid.New()[:6]
+	newSecrets[secretKey] = planProperties["plan_secret"]
+	planSecret := fmt.Sprintf("((%s:%s))", serviceadapter.ODBSecretPrefix, secretKey)
+	if previousSecrets != nil {
+		existingCredhubPath, ok := previousManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+		if ok && previousSecrets[existingCredhubPath.(string)] == planProperties["plan_secret"] {
+			planSecret = existingCredhubPath.(string)
+			delete(newSecrets, secretKey)
+		}
+	}
+
 	properties := map[interface{}]interface{}{
 		"persistence":      persistence,
 		"password":         password,
@@ -456,6 +477,7 @@ func (m ManifestGenerator) redisServerProperties(deploymentName string, planProp
 		"ca_cert":          "((" + CertificateVariableName + ".ca))",
 		"certificate":      "((" + CertificateVariableName + ".certificate))",
 		"private_key":      "((" + CertificateVariableName + ".private_key))",
+		"plan_secret":      planSecret,
 	}
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {
