@@ -31,7 +31,6 @@ var _ = Describe("Redis Service Adapter", func() {
 		defaultServiceReleases   serviceadapter.ServiceReleases
 		defaultRequestParameters map[string]interface{}
 		manifestGenerator        adapter.ManifestGenerator
-		binder                   adapter.Binder
 		dedicatedPlan            serviceadapter.Plan
 		highMemoryPlan           serviceadapter.Plan
 		stderr                   *gbytes.Buffer
@@ -118,7 +117,6 @@ var _ = Describe("Redis Service Adapter", func() {
 		config.RedisInstanceGroupName = "redis-server"
 		manifestGenerator = adapter.ManifestGenerator{Config: config, StderrLogger: stderrLogger}
 
-		binder = adapter.Binder{StderrLogger: stderrLogger}
 	})
 
 	Describe("Generating manifests", func() {
@@ -1118,85 +1116,6 @@ var _ = Describe("Redis Service Adapter", func() {
 		})
 	})
 
-	Describe("binding", func() {
-		var (
-			actualBinding    serviceadapter.Binding
-			actualBindingErr error
-			expectedPassword = "expectedPassword"
-			boshVMs          bosh.BoshVMs
-			currentManifest  bosh.BoshManifest
-		)
-		BeforeEach(func() {
-
-			boshVMs = bosh.BoshVMs{"redis-server": []string{"an-ip"}}
-			currentManifest = bosh.BoshManifest{
-				InstanceGroups: []bosh.InstanceGroup{
-					{
-						Properties: map[string]interface{}{"redis": map[interface{}]interface{}{"password": expectedPassword}},
-					},
-				},
-			}
-
-		})
-
-		JustBeforeEach(func() {
-			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil, nil)
-		})
-
-		Context("has a password in the manifest", func() {
-			It("has no error", func() {
-				Expect(actualBindingErr).NotTo(HaveOccurred())
-			})
-
-			It("returns the password from the manifest", func() {
-				Expect(actualBinding.Credentials["password"]).To(Equal(expectedPassword))
-			})
-
-			It("returns the host from the vms", func() {
-				Expect(actualBinding.Credentials["host"]).To(Equal("an-ip"))
-			})
-		})
-
-		Context("when the bosh vms don't have redis-server", func() {
-			BeforeEach(func() {
-				boshVMs = bosh.BoshVMs{"redis-server1": []string{"an-ip"}}
-			})
-			It("returns an error for the cli user", func() {
-				Expect(actualBindingErr).To(HaveOccurred())
-				Expect(actualBindingErr).To(MatchError(""))
-			})
-			It("logs an error for the operator", func() {
-				Expect(stderr).To(gbytes.Say("expected redis-server instance group to have only 1 instance, got 0"))
-			})
-		})
-
-		Context("when the bosh vms has a redis-server key, but it has no instances", func() {
-			BeforeEach(func() {
-				boshVMs = bosh.BoshVMs{"redis-server": []string{}}
-			})
-			It("returns an error for the cli user", func() {
-				Expect(actualBindingErr).To(HaveOccurred())
-				Expect(actualBindingErr).To(MatchError(""))
-			})
-			It("logs an error for the operator", func() {
-				Expect(stderr).To(gbytes.Say("expected redis-server instance group to have only 1 instance, got 0"))
-			})
-		})
-
-		Context("when there are no instance groups for Redis", func() {
-			BeforeEach(func() {
-				boshVMs = bosh.BoshVMs{}
-			})
-			It("returns an error for the cli user", func() {
-				Expect(actualBindingErr).To(HaveOccurred())
-				Expect(actualBindingErr).To(MatchError(""))
-			})
-			It("logs an error for the operator", func() {
-				Expect(stderr).To(gbytes.Say("expected 1 instance group in the Redis deployment, got 0"))
-			})
-		})
-
-	})
 })
 
 func createDefaultEmptyManifest() bosh.BoshManifest {

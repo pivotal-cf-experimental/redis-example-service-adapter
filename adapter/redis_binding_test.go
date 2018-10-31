@@ -2,11 +2,13 @@ package adapter_test
 
 import (
 	"errors"
+	"io"
 	"log"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/redis-example-service-adapter/adapter"
 
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
@@ -145,6 +147,93 @@ var _ = Describe("Binding", func() {
 				Expect(err).To(MatchError(ContainSubstring("DeleteBinding received secrets when secure manifests are disabled")))
 			})
 		})
+	})
+
+	Describe("binding", func() {
+
+		var (
+			actualBinding    serviceadapter.Binding
+			actualBindingErr error
+			stderr           *gbytes.Buffer
+			stderrLogger     *log.Logger
+			binder           adapter.Binder
+			expectedPassword = "expectedPassword"
+			boshVMs          bosh.BoshVMs
+			currentManifest  bosh.BoshManifest
+		)
+
+		BeforeEach(func() {
+			boshVMs = bosh.BoshVMs{"redis-server": []string{"an-ip"}}
+			currentManifest = bosh.BoshManifest{
+				InstanceGroups: []bosh.InstanceGroup{
+					{
+						Properties: map[string]interface{}{"redis": map[interface{}]interface{}{"password": expectedPassword}},
+					},
+				},
+			}
+			stderr = gbytes.NewBuffer()
+			stderrLogger = log.New(io.MultiWriter(stderr, GinkgoWriter), "", log.LstdFlags)
+			binder = adapter.Binder{StderrLogger: stderrLogger}
+
+		})
+
+		JustBeforeEach(func() {
+			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil, nil)
+		})
+
+		Context("has a password in the manifest", func() {
+			It("has no error", func() {
+				Expect(actualBindingErr).NotTo(HaveOccurred())
+			})
+
+			It("returns the password from the manifest", func() {
+				Expect(actualBinding.Credentials["password"]).To(Equal(expectedPassword))
+			})
+
+			It("returns the host from the vms", func() {
+				Expect(actualBinding.Credentials["host"]).To(Equal("an-ip"))
+			})
+		})
+
+		Context("when the bosh vms don't have redis-server", func() {
+			BeforeEach(func() {
+				boshVMs = bosh.BoshVMs{"redis-server1": []string{"an-ip"}}
+			})
+			It("returns an error for the cli user", func() {
+				Expect(actualBindingErr).To(HaveOccurred())
+				Expect(actualBindingErr).To(MatchError(""))
+			})
+			It("logs an error for the operator", func() {
+				Expect(stderr).To(gbytes.Say("expected redis-server instance group to have only 1 instance, got 0"))
+			})
+		})
+
+		Context("when the bosh vms has a redis-server key, but it has no instances", func() {
+			BeforeEach(func() {
+				boshVMs = bosh.BoshVMs{"redis-server": []string{}}
+			})
+			It("returns an error for the cli user", func() {
+				Expect(actualBindingErr).To(HaveOccurred())
+				Expect(actualBindingErr).To(MatchError(""))
+			})
+			It("logs an error for the operator", func() {
+				Expect(stderr).To(gbytes.Say("expected redis-server instance group to have only 1 instance, got 0"))
+			})
+		})
+
+		Context("when there are no instance groups for Redis", func() {
+			BeforeEach(func() {
+				boshVMs = bosh.BoshVMs{}
+			})
+			It("returns an error for the cli user", func() {
+				Expect(actualBindingErr).To(HaveOccurred())
+				Expect(actualBindingErr).To(MatchError(""))
+			})
+			It("logs an error for the operator", func() {
+				Expect(stderr).To(gbytes.Say("expected 1 instance group in the Redis deployment, got 0"))
+			})
+		})
+
 	})
 })
 
