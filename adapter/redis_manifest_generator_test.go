@@ -114,6 +114,7 @@ var _ = Describe("Redis Service Adapter", func() {
 		stderr = gbytes.NewBuffer()
 		stderrLogger = log.New(io.MultiWriter(stderr, GinkgoWriter), "", log.LstdFlags)
 
+		config.SecureManifestsEnabled = true
 		config.RedisInstanceGroupName = "redis-server"
 		manifestGenerator = adapter.ManifestGenerator{Config: config, StderrLogger: stderrLogger}
 
@@ -1209,6 +1210,27 @@ var _ = Describe("Redis Service Adapter", func() {
 					manifestGenerator,
 					defaultServiceReleases,
 					planWithoutSecret,
+					map[string]interface{}{},
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				Expect(found).To(BeFalse(), "should not have plan_secret key in manifest")
+				for key, _ := range provisionManifestOutput.ODBManagedSecrets {
+					Expect(key).ToNot(HavePrefix("plan_secret_key"))
+				}
+			})
+
+			It("does not include the secret in the manifest nor in the secrets map when secure manifests is not enabled", func() {
+				config.SecureManifestsEnabled = false
+				manifestGenerator = adapter.ManifestGenerator{Config: config, StderrLogger: stderrLogger}
+
+				provisionManifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithSecret,
 					map[string]interface{}{},
 					nil,
 					nil,

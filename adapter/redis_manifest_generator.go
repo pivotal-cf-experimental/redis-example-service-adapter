@@ -468,7 +468,7 @@ func (m ManifestGenerator) redisServerProperties(
 		"private_key":      "((" + CertificateVariableName + ".private_key))",
 	}
 
-	if secretFromPlan, exists := planProperties["plan_secret"]; exists {
+	if secretFromPlan, exists := planProperties["plan_secret"]; exists && m.Config.SecureManifestsEnabled {
 		secretKey := "plan_secret_key" + uuid.New()[:6]
 		newSecrets[secretKey] = secretFromPlan
 		planSecret := fmt.Sprintf("((%s:%s))", serviceadapter.ODBSecretPrefix, secretKey)
