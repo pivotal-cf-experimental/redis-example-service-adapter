@@ -457,17 +457,6 @@ func (m ManifestGenerator) redisServerProperties(
 
 	maxClients := maxClientsForRedisServer(arbitraryParams, previousRedisProperties)
 
-	secretKey := "plan_secret_key" + uuid.New()[:6]
-	newSecrets[secretKey] = planProperties["plan_secret"]
-	planSecret := fmt.Sprintf("((%s:%s))", serviceadapter.ODBSecretPrefix, secretKey)
-	if previousSecrets != nil {
-		existingCredhubPath, ok := previousManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
-		if ok && previousSecrets[existingCredhubPath.(string)] == planProperties["plan_secret"] {
-			planSecret = existingCredhubPath.(string)
-			delete(newSecrets, secretKey)
-		}
-	}
-
 	properties := map[interface{}]interface{}{
 		"persistence":      persistence,
 		"password":         password,
@@ -477,7 +466,20 @@ func (m ManifestGenerator) redisServerProperties(
 		"ca_cert":          "((" + CertificateVariableName + ".ca))",
 		"certificate":      "((" + CertificateVariableName + ".certificate))",
 		"private_key":      "((" + CertificateVariableName + ".private_key))",
-		"plan_secret":      planSecret,
+	}
+
+	if secretFromPlan, exists := planProperties["plan_secret"]; exists {
+		secretKey := "plan_secret_key" + uuid.New()[:6]
+		newSecrets[secretKey] = secretFromPlan
+		planSecret := fmt.Sprintf("((%s:%s))", serviceadapter.ODBSecretPrefix, secretKey)
+		if previousSecrets != nil {
+			existingCredhubPath, ok := previousManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+			if ok && previousSecrets[existingCredhubPath.(string)] == secretFromPlan {
+				planSecret = existingCredhubPath.(string)
+				delete(newSecrets, secretKey)
+			}
+		}
+		properties["plan_secret"] = planSecret
 	}
 
 	if secretPath, ok := arbitraryParams["credhub_secret_path"]; ok {

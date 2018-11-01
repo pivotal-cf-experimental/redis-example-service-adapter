@@ -1198,6 +1198,30 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(provisionSecretKey).ToNot(Equal(updateSecretKey))
 			})
 
+			It("does not include the secret in the manifest nor in the secrets map when not supplied via plan properties", func() {
+				planWithoutSecret := serviceadapter.Plan{
+					Properties: map[string]interface{}{
+						"persistence": true,
+					},
+					InstanceGroups: []serviceadapter.InstanceGroup{{Name: config.RedisInstanceGroupName}},
+				}
+				provisionManifestOutput, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					planWithoutSecret,
+					map[string]interface{}{},
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				Expect(found).To(BeFalse(), "should not have plan_secret key in manifest")
+				for key, _ := range provisionManifestOutput.ODBManagedSecrets {
+					Expect(key).ToNot(HavePrefix("plan_secret_key"))
+				}
+			})
+
 		})
 
 		Describe("release version tests", func() {
