@@ -13,6 +13,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -33,6 +34,8 @@ const (
 	GeneratedSecretKey          = "generated_secret"
 	GeneratedSecretVariableName = "secret_pass"
 	CertificateVariableName     = "instance_certificate"
+	CloudConfigKey              = "cloud"
+	VMExtensionsConfigKey       = "vm_extensions_config"
 )
 
 type ManifestGenerator struct {
@@ -47,6 +50,7 @@ func (m ManifestGenerator) GenerateManifest(
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
 	previousSecrets serviceadapter.ManifestSecrets,
+	previousConfigs serviceadapter.BOSHConfigs,
 ) (serviceadapter.GenerateManifestOutput, error) {
 
 	ctx := requestParams.ArbitraryContext()
@@ -73,6 +77,11 @@ func (m ManifestGenerator) GenerateManifest(
 	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
 		managedSecretValue = requestParamsOdbManagedSecret.(string)
 		m.Config.IgnoreODBManagedSecretOnUpdate = true
+	}
+
+	vmExtensionConfig := ""
+	if requestParamsVMExtensionConfig, found := requestParams.ArbitraryParams()[VMExtensionsConfigKey]; found {
+		vmExtensionConfig = requestParamsVMExtensionConfig.(string)
 	}
 
 	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
@@ -148,6 +157,15 @@ func (m ManifestGenerator) GenerateManifest(
 		AZs:                redisServerInstanceGroup.AZs,
 		Properties:         redisProperties,
 		MigratedFrom:       migrations,
+	}
+	if vmExtensionConfig != "" {
+		vmExtensionNames, err := gatherVMExtensionNames(vmExtensionConfig)
+		if err != nil {
+			return serviceadapter.GenerateManifestOutput{}, err
+		}
+		if len(vmExtensionNames) > 0 {
+			newRedisInstanceGroup.VMExtensions = append(newRedisInstanceGroup.VMExtensions, vmExtensionNames...)
+		}
 	}
 
 	instanceGroups := []bosh.InstanceGroup{newRedisInstanceGroup}
@@ -254,16 +272,22 @@ func (m ManifestGenerator) GenerateManifest(
 	}
 	newSecrets[ManagedSecretKey] = managedSecretValue
 
+	newConfigs := serviceadapter.BOSHConfigs{}
+	if vmExtensionConfig != "" {
+		newConfigs[CloudConfigKey] = vmExtensionConfig
+	}
+
 	return serviceadapter.GenerateManifestOutput{
 		Manifest:          newManifest,
 		ODBManagedSecrets: newSecrets,
+		Configs:           newConfigs,
 	}, nil
 }
 
 func findIllegalArbitraryParams(arbitraryParams map[string]interface{}) []string {
 	var illegalParams []string
 	for k, _ := range arbitraryParams {
-		if k == "maxclients" || k == "credhub_secret_path" || k == ManagedSecretKey {
+		if k == "maxclients" || k == "credhub_secret_path" || k == ManagedSecretKey || k == VMExtensionsConfigKey {
 			continue
 		}
 		illegalParams = append(illegalParams, k)
@@ -624,4 +648,25 @@ func (m *ManifestGenerator) validUpgradePath(previousManifest bosh.BoshManifest,
 	}
 
 	return nil
+}
+
+type VMExtension struct {
+	Name            string                 `yaml:"name"`
+	CloudProperties map[string]interface{} `yaml:"cloud_properties"`
+}
+
+type CloudConfig struct {
+	VMExtensions []VMExtension `yaml:"vm_extensions"`
+}
+
+func gatherVMExtensionNames(vmExtensionsConfig string) ([]string, error) {
+	var vmExtensionNames []string
+	cloudConfig := CloudConfig{}
+	if err := yaml.Unmarshal([]byte(vmExtensionsConfig), &cloudConfig); err != nil {
+		return vmExtensionNames, err
+	}
+	for _, vmExtension := range cloudConfig.VMExtensions {
+		vmExtensionNames = append(vmExtensionNames, vmExtension.Name)
+	}
+	return vmExtensionNames, nil
 }
