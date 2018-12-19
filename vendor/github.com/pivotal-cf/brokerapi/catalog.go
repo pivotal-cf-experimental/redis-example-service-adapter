@@ -24,16 +24,18 @@ import (
 )
 
 type Service struct {
-	ID              string                  `json:"id"`
-	Name            string                  `json:"name"`
-	Description     string                  `json:"description"`
-	Bindable        bool                    `json:"bindable"`
-	Tags            []string                `json:"tags,omitempty"`
-	PlanUpdatable   bool                    `json:"plan_updateable"`
-	Plans           []ServicePlan           `json:"plans"`
-	Requires        []RequiredPermission    `json:"requires,omitempty"`
-	Metadata        *ServiceMetadata        `json:"metadata,omitempty"`
-	DashboardClient *ServiceDashboardClient `json:"dashboard_client,omitempty"`
+	ID                   string                  `json:"id"`
+	Name                 string                  `json:"name"`
+	Description          string                  `json:"description"`
+	Bindable             bool                    `json:"bindable"`
+	InstancesRetrievable bool                    `json:"instances_retrievable,omitempty"`
+	BindingsRetrievable  bool                    `json:"bindings_retrievable,omitempty"`
+	Tags                 []string                `json:"tags,omitempty"`
+	PlanUpdatable        bool                    `json:"plan_updateable"`
+	Plans                []ServicePlan           `json:"plans"`
+	Requires             []RequiredPermission    `json:"requires,omitempty"`
+	Metadata             *ServiceMetadata        `json:"metadata,omitempty"`
+	DashboardClient      *ServiceDashboardClient `json:"dashboard_client,omitempty"`
 }
 
 type ServiceDashboardClient struct {
@@ -50,7 +52,7 @@ type ServicePlan struct {
 	Bindable        *bool                `json:"bindable,omitempty"`
 	Metadata        *ServicePlanMetadata `json:"metadata,omitempty"`
 	Schemas         *ServiceSchemas      `json:"schemas,omitempty"`
-	MaintenanceInfo MaintenanceInfo      `json:"maintenance_info,omitempty"`
+	MaintenanceInfo *MaintenanceInfo     `json:"maintenance_info,omitempty"`
 }
 
 type ServiceSchemas struct {
@@ -95,7 +97,8 @@ type ServiceMetadata struct {
 }
 
 type MaintenanceInfo struct {
-	Public map[string]interface{} `json:"public"`
+	Public  map[string]string `json:"public,omitempty"`
+	Private string            `json:"private,omitempty"`
 }
 
 func FreeValue(v bool) *bool {
