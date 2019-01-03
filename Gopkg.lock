@@ -93,15 +93,16 @@
   version = "v1.2"
 
 [[projects]]
-  digest = "1:55fb3328d5855c952ca35d6c0b7e08e23e6c582ea9a1c43b904d50faccc1e6cc"
+  digest = "1:433525450278b3319b436d1ff367fbad32ac553809c8e879a070b7fd0ef92cc5"
   name = "github.com/pivotal-cf/brokerapi"
   packages = [
     ".",
     "auth",
+    "middlewares/originating_identity_header",
   ]
   pruneopts = "UT"
-  revision = "588de80419988e1f1171d895d1a638ede1b775cc"
-  version = "v4.1.0"
+  revision = "644cda48aed126142816ea9fdf0c676e7d66032e"
+  version = "v4.2.1"
 
 [[projects]]
   branch = "master"
@@ -112,7 +113,7 @@
     "serviceadapter",
   ]
   pruneopts = "UT"
-  revision = "ff5434bfdc252eb81967f777bdc34519b1ca6fd5"
+  revision = "b257a57e90c56f05d5a41abc41ab5828ed4e1293"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
