@@ -43,29 +43,21 @@ type ManifestGenerator struct {
 	Config       Config
 }
 
-func (m ManifestGenerator) GenerateManifest(
-	serviceDeployment serviceadapter.ServiceDeployment,
-	plan serviceadapter.Plan,
-	requestParams serviceadapter.RequestParameters,
-	previousManifest *bosh.BoshManifest,
-	previousPlan *serviceadapter.Plan,
-	previousSecrets serviceadapter.ManifestSecrets,
-	previousConfigs serviceadapter.BOSHConfigs,
-) (serviceadapter.GenerateManifestOutput, error) {
+func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManifestParams) (serviceadapter.GenerateManifestOutput, error) {
 
-	ctx := requestParams.ArbitraryContext()
-	platform := requestParams.Platform()
+	ctx := params.RequestParams.ArbitraryContext()
+	platform := params.RequestParams.Platform()
 	if len(ctx) == 0 || platform != "cloudfoundry" {
 		m.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
 	}
-	arbitraryParameters := requestParams.ArbitraryParams()
+	arbitraryParameters := params.RequestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
 		return serviceadapter.GenerateManifestOutput{}, fmt.Errorf("unsupported parameter(s) for this service plan: %s", strings.Join(illegalArbParams, ", "))
 	}
 
-	if previousManifest != nil {
-		if err := m.validUpgradePath(*previousManifest, serviceDeployment.Releases); err != nil {
+	if params.PreviousManifest != nil {
+		if err := m.validUpgradePath(*params.PreviousManifest, params.ServiceDeployment.Releases); err != nil {
 			return serviceadapter.GenerateManifestOutput{}, err
 		}
 	}
@@ -74,17 +66,17 @@ func (m ManifestGenerator) GenerateManifest(
 
 	var err error
 	managedSecretValue := ManagedSecretValue
-	if requestParamsOdbManagedSecret, found := requestParams.ArbitraryParams()[ManagedSecretKey]; found {
+	if requestParamsOdbManagedSecret, found := params.RequestParams.ArbitraryParams()[ManagedSecretKey]; found {
 		managedSecretValue = requestParamsOdbManagedSecret.(string)
 		m.Config.IgnoreODBManagedSecretOnUpdate = true
 	}
 
 	vmExtensionConfig := ""
-	if requestParamsVMExtensionConfig, found := requestParams.ArbitraryParams()[VMExtensionsConfigKey]; found {
+	if requestParamsVMExtensionConfig, found := params.RequestParams.ArbitraryParams()[VMExtensionsConfigKey]; found {
 		vmExtensionConfig = requestParamsVMExtensionConfig.(string)
 	}
 
-	redisServerInstanceGroup := m.findRedisServerInstanceGroup(plan)
+	redisServerInstanceGroup := m.findRedisServerInstanceGroup(params.Plan)
 	if redisServerInstanceGroup == nil {
 		m.StderrLogger.Println(fmt.Sprintf("no %s instance group definition found", m.Config.RedisInstanceGroupName))
 		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, service configuration issue occurred")
@@ -95,41 +87,41 @@ func (m ManifestGenerator) GenerateManifest(
 	redisServerNetworks := mapNetworksToBoshNetworks(redisServerInstanceGroup.Networks)
 
 	redisProperties, err := m.redisServerProperties(
-		serviceDeployment.DeploymentName,
-		plan.Properties,
+		params.ServiceDeployment.DeploymentName,
+		params.Plan.Properties,
 		arbitraryParameters,
-		previousManifest,
+		params.PreviousManifest,
 		newSecrets,
-		previousSecrets,
+		params.PreviousSecrets,
 	)
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
 	}
 
 	releases := []bosh.Release{}
-	for _, release := range serviceDeployment.Releases {
+	for _, release := range params.ServiceDeployment.Releases {
 		releases = append(releases, bosh.Release{
 			Name:    release.Name,
 			Version: release.Version,
 		})
 	}
 
-	redisServerJob, err := m.gatherRedisServerJob(serviceDeployment.Releases)
+	redisServerJob, err := m.gatherRedisServerJob(params.ServiceDeployment.Releases)
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
 	}
 
 	redisServerInstanceJobs := []bosh.Job{redisServerJob}
 
-	if value, ok := plan.Properties["colocated_errand"].(bool); ok && value {
+	if value, ok := params.Plan.Properties["colocated_errand"].(bool); ok && value {
 		var errands []serviceadapter.Errand
-		errands = append(plan.LifecycleErrands.PreDelete, plan.LifecycleErrands.PostDeploy...)
+		errands = append(params.Plan.LifecycleErrands.PreDelete, params.Plan.LifecycleErrands.PostDeploy...)
 
 		for _, errand := range errands {
 			if len(errand.Instances) == 0 {
 				continue
 			}
-			job, err := gatherJob(serviceDeployment.Releases, errand.Name)
+			job, err := gatherJob(params.ServiceDeployment.Releases, errand.Name)
 			if err != nil {
 				return serviceadapter.GenerateManifestOutput{}, err
 			}
@@ -170,12 +162,12 @@ func (m ManifestGenerator) GenerateManifest(
 
 	instanceGroups := []bosh.InstanceGroup{newRedisInstanceGroup}
 
-	healthCheckInstanceGroup := findHealthCheckInstanceGroup(plan)
+	healthCheckInstanceGroup := findHealthCheckInstanceGroup(params.Plan)
 
 	if healthCheckInstanceGroup != nil {
-		healthCheckProperties := m.healthCheckProperties(plan.Properties)
+		healthCheckProperties := m.healthCheckProperties(params.Plan.Properties)
 
-		healthCheckJob, err := gatherHealthCheckJob(serviceDeployment.Releases)
+		healthCheckJob, err := gatherHealthCheckJob(params.ServiceDeployment.Releases)
 
 		if err != nil {
 			return serviceadapter.GenerateManifestOutput{}, err
@@ -199,12 +191,12 @@ func (m ManifestGenerator) GenerateManifest(
 		})
 	}
 
-	cleanupDataInstanceGroup := findCleanupDataInstanceGroup(plan)
+	cleanupDataInstanceGroup := findCleanupDataInstanceGroup(params.Plan)
 
 	if cleanupDataInstanceGroup != nil {
-		cleanupDataProperties := m.cleanupDataProperties(plan.Properties)
+		cleanupDataProperties := m.cleanupDataProperties(params.Plan.Properties)
 
-		cleanupDataJob, err := gatherCleanupDataJob(serviceDeployment.Releases)
+		cleanupDataJob, err := gatherCleanupDataJob(params.ServiceDeployment.Releases)
 		if err != nil {
 			return serviceadapter.GenerateManifestOutput{}, err
 		}
@@ -229,17 +221,17 @@ func (m ManifestGenerator) GenerateManifest(
 	}
 
 	newManifest := bosh.BoshManifest{
-		Name:     serviceDeployment.DeploymentName,
+		Name:     params.ServiceDeployment.DeploymentName,
 		Releases: releases,
 		Stemcells: []bosh.Stemcell{
 			{
 				Alias:   stemcellAlias,
-				OS:      serviceDeployment.Stemcell.OS,
-				Version: serviceDeployment.Stemcell.Version,
+				OS:      params.ServiceDeployment.Stemcell.OS,
+				Version: params.ServiceDeployment.Stemcell.Version,
 			},
 		},
 		InstanceGroups: instanceGroups,
-		Update:         generateUpdateBlock(plan.Update, previousManifest),
+		Update:         generateUpdateBlock(params.Plan.Update, params.PreviousManifest),
 		Properties:     map[string]interface{}{},
 		Tags: map[string]interface{}{
 			"product": "redis",
@@ -262,10 +254,10 @@ func (m ManifestGenerator) GenerateManifest(
 			},
 		},
 	}
-	if useShortDNSAddress, set := plan.Properties["use_short_dns_addresses"]; set {
+	if useShortDNSAddress, set := params.Plan.Properties["use_short_dns_addresses"]; set {
 		newManifest.Features.UseShortDNSAddresses = bosh.BoolPointer(useShortDNSAddress == true)
 	}
-	if somethingCompletelyDifferent, set := plan.Properties["something_completely_different"]; set {
+	if somethingCompletelyDifferent, set := params.Plan.Properties["something_completely_different"]; set {
 		newManifest.Features.ExtraFeatures = map[string]interface{}{
 			"something_completely_different": somethingCompletelyDifferent,
 		}

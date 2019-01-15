@@ -1445,14 +1445,22 @@ func generateManifest(
 	oldConfigs serviceadapter.BOSHConfigs,
 ) (serviceadapter.GenerateManifestOutput, error) {
 
-	return manifestGenerator.GenerateManifest(serviceadapter.ServiceDeployment{
-		DeploymentName: "some-instance-id",
-		Stemcell: serviceadapter.Stemcell{
-			OS:      "some-stemcell-os",
-			Version: "1234",
+	return manifestGenerator.GenerateManifest(serviceadapter.GenerateManifestParams{
+		ServiceDeployment: serviceadapter.ServiceDeployment{
+			DeploymentName: "some-instance-id",
+			Stemcell: serviceadapter.Stemcell{
+				OS:      "some-stemcell-os",
+				Version: "1234",
+			},
+			Releases: serviceReleases,
 		},
-		Releases: serviceReleases,
-	}, plan, requestParams, oldManifest, oldPlan, oldSecrets, oldConfigs)
+		Plan:             plan,
+		RequestParams:    requestParams,
+		PreviousManifest: oldManifest,
+		PreviousPlan:     oldPlan,
+		PreviousSecrets:  oldSecrets,
+		PreviousConfigs:  oldConfigs,
+	})
 }
 
 func containsJobName(list []bosh.Job, query string) bool {
