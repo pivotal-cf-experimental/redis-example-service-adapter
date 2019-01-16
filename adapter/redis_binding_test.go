@@ -61,7 +61,15 @@ var _ = Describe("Binding", func() {
 					properties := manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
 					properties["secret"] = secretPath
 				}
-				binding, err := binder.CreateBinding(bindingID, topology, manifest, params, resolvedSecrets, serviceadapter.DNSAddresses{})
+				params := serviceadapter.CreateBindingParams{
+					BindingID:          bindingID,
+					DeploymentTopology: topology,
+					Manifest:           manifest,
+					RequestParams:      params,
+					Secrets:            resolvedSecrets,
+					DnsAddresses:       serviceadapter.DNSAddresses{},
+				}
+				binding, err := binder.CreateBinding(params)
 				if expectedErr != nil {
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal(expectedErr.Error()))
@@ -84,7 +92,15 @@ var _ = Describe("Binding", func() {
 		Describe("binding with DNS", func() {
 			It("produces a binding containing a DNS address", func() {
 				dnsAddresses := serviceadapter.DNSAddresses{"config-1": "this.is.a.dns.address"}
-				binding, err := binder.CreateBinding(bindingID, topology, manifest, params, defaultMap(), dnsAddresses)
+				params := serviceadapter.CreateBindingParams{
+					BindingID:          bindingID,
+					DeploymentTopology: topology,
+					Manifest:           manifest,
+					RequestParams:      params,
+					Secrets:            defaultMap(),
+					DnsAddresses:       dnsAddresses,
+				}
+				binding, err := binder.CreateBinding(params)
 				Expect(err).NotTo(HaveOccurred())
 				s, ok := binding.Credentials["dns_addresses"]
 				Expect(ok).To(BeTrue(), "DNS address not found in binding.Credentials")
@@ -96,11 +112,19 @@ var _ = Describe("Binding", func() {
 	Describe("Delete Binding", func() {
 		var (
 			binder adapter.Binder
+			params serviceadapter.DeleteBindingParams
 		)
 
 		BeforeEach(func() {
 			binder = adapter.Binder{
 				StderrLogger: log.New(GinkgoWriter, "create-binding", log.LstdFlags),
+			}
+			params = serviceadapter.DeleteBindingParams{
+				BindingID:          "binding-id",
+				DeploymentTopology: nil,
+				Manifest:           bosh.BoshManifest{},
+				RequestParams:      nil,
+				Secrets:            nil,
 			}
 		})
 
@@ -111,23 +135,23 @@ var _ = Describe("Binding", func() {
 			It("returns an error when it doesn't have the right credentials", func() {
 				badSecretKey := "unwanted-secret"
 				Expect(badSecretKey).ToNot(Equal(adapter.GeneratedSecretVariableName))
-				secrets := serviceadapter.ManifestSecrets{"((" + badSecretKey + "))": "not the password"}
+				params.Secrets = serviceadapter.ManifestSecrets{"((" + badSecretKey + "))": "not the password"}
 
-				err := binder.DeleteBinding("binding-id", nil, bosh.BoshManifest{}, nil, secrets)
+				err := binder.DeleteBinding(params)
 				Expect(err).To(MatchError("The required secret was not provided to DeleteBinding"))
 			})
 
 			It("returns an error when the provided credential is empty", func() {
-				secrets := serviceadapter.ManifestSecrets{"((" + adapter.GeneratedSecretVariableName + "))": ""}
+				params.Secrets = serviceadapter.ManifestSecrets{"((" + adapter.GeneratedSecretVariableName + "))": ""}
 
-				err := binder.DeleteBinding("binding-id", nil, bosh.BoshManifest{}, nil, secrets)
+				err := binder.DeleteBinding(params)
 				Expect(err).To(MatchError("The incorrect secret value was provided to DeleteBinding"))
 			})
 
 			It("doesn't return an error when it has the right credentials", func() {
-				secrets := serviceadapter.ManifestSecrets{"((" + adapter.GeneratedSecretVariableName + "))": "bosh generated passw0rd"}
+				params.Secrets = serviceadapter.ManifestSecrets{"((" + adapter.GeneratedSecretVariableName + "))": "bosh generated passw0rd"}
 
-				err := binder.DeleteBinding("binding-id", nil, bosh.BoshManifest{}, nil, secrets)
+				err := binder.DeleteBinding(params)
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -138,12 +162,12 @@ var _ = Describe("Binding", func() {
 			})
 			It("does not error when no secrets are passed", func() {
 
-				err := binder.DeleteBinding("binding-id", nil, bosh.BoshManifest{}, nil, nil)
+				err := binder.DeleteBinding(params)
 				Expect(err).NotTo(HaveOccurred())
 			})
 			It("errors when any secrets are passed", func() {
-				secrets := serviceadapter.ManifestSecrets{"a secret": "the secret"}
-				err := binder.DeleteBinding("binding-id", nil, bosh.BoshManifest{}, nil, secrets)
+				params.Secrets = serviceadapter.ManifestSecrets{"a secret": "the secret"}
+				err := binder.DeleteBinding(params)
 				Expect(err).To(MatchError(ContainSubstring("DeleteBinding received secrets when secure manifests are disabled")))
 			})
 		})
@@ -178,7 +202,15 @@ var _ = Describe("Binding", func() {
 		})
 
 		JustBeforeEach(func() {
-			actualBinding, actualBindingErr = binder.CreateBinding("not-relevant", boshVMs, currentManifest, nil, nil, nil)
+			params := serviceadapter.CreateBindingParams{
+				BindingID:          "not-relevant",
+				DeploymentTopology: boshVMs,
+				Manifest:           currentManifest,
+				RequestParams:      nil,
+				Secrets:            nil,
+				DnsAddresses:       nil,
+			}
+			actualBinding, actualBindingErr = binder.CreateBinding(params)
 		})
 
 		Context("has a password in the manifest", func() {

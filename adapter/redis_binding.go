@@ -15,20 +15,20 @@ type Binder struct {
 	Config       Config
 }
 
-func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets, dnsAddresses serviceadapter.DNSAddresses) (serviceadapter.Binding, error) {
-	ctx := requestParams.ArbitraryContext()
-	platform := requestParams.Platform()
+func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (serviceadapter.Binding, error) {
+	ctx := params.RequestParams.ArbitraryContext()
+	platform := params.RequestParams.Platform()
 	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
 		b.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
 	}
-	redisHost, err := getRedisHost(deploymentTopology)
+	redisHost, err := getRedisHost(params.DeploymentTopology)
 	if err != nil {
 		b.StderrLogger.Println(err.Error())
 		return serviceadapter.Binding{}, errors.New("")
 	}
 
-	resolvedSecrets := make(map[string]string, len(secrets))
-	if secrets != nil { // service created with latest generate-manifest
+	resolvedSecrets := make(map[string]string, len(params.Secrets))
+	if params.Secrets != nil { // service created with latest generate-manifest
 		manifestSecretPaths := []struct {
 			Name     string
 			Optional bool
@@ -43,7 +43,7 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 		for _, field := range manifestSecretPaths {
 			var ok bool
 			manifestSecret := field.Name
-			path, ok := redisPlanProperties(manifest)[manifestSecret].(string)
+			path, ok := redisPlanProperties(params.Manifest)[manifestSecret].(string)
 			if !ok || path == "" {
 				err := fmt.Errorf("could not find path for " + manifestSecret)
 				b.StderrLogger.Println(err.Error())
@@ -65,7 +65,7 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 				return serviceadapter.Binding{}, err
 			}
 
-			value := secrets[path]
+			value := params.Secrets[path]
 			if !ok || value == "" {
 				err := errors.New("manifest wasn't correctly interpolated: missing value for `" + path + "`")
 				b.StderrLogger.Println(err.Error())
@@ -76,7 +76,7 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 	}
 
 	var secretKey string
-	if value, ok := redisPlanProperties(manifest)["secret"].(string); ok {
+	if value, ok := redisPlanProperties(params.Manifest)["secret"].(string); ok {
 		secretKey = value
 	}
 	return serviceadapter.Binding{
@@ -84,25 +84,25 @@ func (b Binder) CreateBinding(bindingID string, deploymentTopology bosh.BoshVMs,
 			"host":                      redisHost,
 			"port":                      RedisServerPort,
 			"generated_secret":          resolvedSecrets[GeneratedSecretKey],
-			"password":                  redisPlanProperties(manifest)["password"].(string),
+			"password":                  redisPlanProperties(params.Manifest)["password"].(string),
 			"secret":                    resolvedSecrets[secretKey],
 			"odb_managed_secret":        resolvedSecrets[ManagedSecretKey],
-			"dns_addresses":             dnsAddresses,
-			"passed_in_secrets":         secrets,
+			"dns_addresses":             params.DnsAddresses,
+			"passed_in_secrets":         params.Secrets,
 			"expected_resolved_secrets": resolvedSecrets,
 		},
 	}, nil
 }
 
-func (b Binder) DeleteBinding(bindingID string, deploymentTopology bosh.BoshVMs, manifest bosh.BoshManifest, requestParams serviceadapter.RequestParameters, secrets serviceadapter.ManifestSecrets) error {
+func (b Binder) DeleteBinding(params serviceadapter.DeleteBindingParams) error {
 	if !b.Config.SecureManifestsEnabled {
-		if len(secrets) != 0 {
+		if len(params.Secrets) != 0 {
 			return errors.New("DeleteBinding received secrets when secure manifests are disabled")
 		}
 		return nil
 	}
 
-	actualSecretValue, ok := secrets["(("+GeneratedSecretVariableName+"))"]
+	actualSecretValue, ok := params.Secrets["(("+GeneratedSecretVariableName+"))"]
 	if !ok {
 		return errors.New("The required secret was not provided to DeleteBinding")
 	}
