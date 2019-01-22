@@ -670,7 +670,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.Configs).To(BeEmpty())
 		})
 
-		It("uses the vm_extenstion when vm_extensions_config is set in arbitrary parameters", func() {
+		It("uses the vm_extension when vm_extensions_config is set in arbitrary parameters", func() {
 			cloudConfig := adapter.CloudConfig{
 				VMExtensions: []adapter.VMExtension{
 					adapter.VMExtension{Name: "my-vm-extension", CloudProperties: nil},
