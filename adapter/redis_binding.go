@@ -87,7 +87,7 @@ func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (servic
 			"password":                  redisPlanProperties(params.Manifest)["password"].(string),
 			"secret":                    resolvedSecrets[secretKey],
 			"odb_managed_secret":        resolvedSecrets[ManagedSecretKey],
-			"dns_addresses":             params.DnsAddresses,
+			"dns_addresses":             params.DNSAddresses,
 			"passed_in_secrets":         params.Secrets,
 			"expected_resolved_secrets": resolvedSecrets,
 		},

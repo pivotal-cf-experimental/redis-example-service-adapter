@@ -67,7 +67,7 @@ var _ = Describe("Binding", func() {
 					Manifest:           manifest,
 					RequestParams:      params,
 					Secrets:            resolvedSecrets,
-					DnsAddresses:       serviceadapter.DNSAddresses{},
+					DNSAddresses:       serviceadapter.DNSAddresses{},
 				}
 				binding, err := binder.CreateBinding(params)
 				if expectedErr != nil {
@@ -98,7 +98,7 @@ var _ = Describe("Binding", func() {
 					Manifest:           manifest,
 					RequestParams:      params,
 					Secrets:            defaultMap(),
-					DnsAddresses:       dnsAddresses,
+					DNSAddresses:       dnsAddresses,
 				}
 				binding, err := binder.CreateBinding(params)
 				Expect(err).NotTo(HaveOccurred())
@@ -208,7 +208,7 @@ var _ = Describe("Binding", func() {
 				Manifest:           currentManifest,
 				RequestParams:      nil,
 				Secrets:            nil,
-				DnsAddresses:       nil,
+				DNSAddresses:       nil,
 			}
 			actualBinding, actualBindingErr = binder.CreateBinding(params)
 		})
