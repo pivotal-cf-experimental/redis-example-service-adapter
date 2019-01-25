@@ -113,11 +113,13 @@ var _ = Describe("Binding", func() {
 		var (
 			binder adapter.Binder
 			params serviceadapter.DeleteBindingParams
+			logger *gbytes.Buffer
 		)
 
 		BeforeEach(func() {
+			logger = gbytes.NewBuffer()
 			binder = adapter.Binder{
-				StderrLogger: log.New(GinkgoWriter, "create-binding", log.LstdFlags),
+				StderrLogger: log.New(io.MultiWriter(logger, GinkgoWriter), "delete-binding", log.LstdFlags),
 			}
 			params = serviceadapter.DeleteBindingParams{
 				BindingID:          "binding-id",
@@ -170,6 +172,15 @@ var _ = Describe("Binding", func() {
 				err := binder.DeleteBinding(params)
 				Expect(err).To(MatchError(ContainSubstring("DeleteBinding received secrets when secure manifests are disabled")))
 			})
+		})
+
+		It("logs DNSAddresses", func() {
+			params.DNSAddresses = map[string]string{
+				"foo": "a.b.c",
+			}
+			err := binder.DeleteBinding(params)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(logger).To(gbytes.Say(`{"foo":"a.b.c"}`))
 		})
 	})
 

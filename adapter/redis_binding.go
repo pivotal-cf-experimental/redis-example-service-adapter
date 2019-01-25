@@ -95,6 +95,8 @@ func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (servic
 }
 
 func (b Binder) DeleteBinding(params serviceadapter.DeleteBindingParams) error {
+	b.StderrLogger.Printf("DNS addresses: %#v", params.DNSAddresses)
+
 	if !b.Config.SecureManifestsEnabled {
 		if len(params.Secrets) != 0 {
 			return errors.New("DeleteBinding received secrets when secure manifests are disabled")
