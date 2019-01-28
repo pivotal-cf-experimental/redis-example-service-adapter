@@ -16,7 +16,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Redis Service Adapter", func() {
@@ -653,53 +653,144 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
 		})
 
-		It("does not return a generated config", func() {
-			oldManifest := createDefaultOldManifest()
+		Context("when vm_extensions_config arbitrary parameter is set", func() {
+			It("uses the vm_extension", func() {
+				cloudConfig := adapter.CloudConfig{
+					VMExtensions: []adapter.VMExtension{
+						adapter.VMExtension{Name: "my-vm-extension", CloudProperties: nil},
+					},
+				}
+				vmExtensionsConfig, err := yaml.Marshal(cloudConfig)
+				Expect(err).NotTo(HaveOccurred())
 
-			generated, err := generateManifest(
-				manifestGenerator,
-				defaultServiceReleases,
-				dedicatedPlan,
-				defaultRequestParameters,
-				&oldManifest,
-				nil,
-				nil,
-				nil,
-			)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(generated.Configs).To(BeEmpty())
+				requestParams := map[string]interface{}{
+					"parameters": map[string]interface{}{
+						adapter.VMExtensionsConfigKey: string(vmExtensionsConfig),
+					},
+				}
+
+				oldManifest := createDefaultOldManifest()
+
+				generated, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					requestParams,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("dedicated-extensions"))
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("my-vm-extension"))
+				Expect(generated.Configs[adapter.CloudConfigKey]).To(Equal(string(vmExtensionsConfig)))
+			})
+
+			It("uses the plan vm_extensions when vm_extensions_config arbitrary parameter does not contain vm_extensions", func() {
+				requestParams := map[string]interface{}{
+					"parameters": map[string]interface{}{
+						adapter.VMExtensionsConfigKey: "",
+					},
+				}
+
+				oldManifest := createDefaultOldManifest()
+
+				generated, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					requestParams,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("dedicated-extensions"))
+				Expect(generated.Configs).ToNot(HaveKey(adapter.CloudConfigKey))
+			})
+
+			It("returns an error when it cannot unmarshall vm_extensions_config arbitrary parameter", func() {
+				requestParams := map[string]interface{}{
+					"parameters": map[string]interface{}{
+						adapter.VMExtensionsConfigKey: "opps",
+					},
+				}
+
+				oldManifest := createDefaultOldManifest()
+
+				_, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					requestParams,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("opps"))
+			})
 		})
 
-		It("uses the vm_extension when vm_extensions_config is set in arbitrary parameters", func() {
-			cloudConfig := adapter.CloudConfig{
-				VMExtensions: []adapter.VMExtension{
-					adapter.VMExtension{Name: "my-vm-extension", CloudProperties: nil},
-				},
-			}
-			vmExtensionsConfig, err := yaml.Marshal(cloudConfig)
-			Expect(err).NotTo(HaveOccurred())
+		Context("when vm_extensions_config arbitrary parameter is not set", func() {
+			It("uses the vm_extensions from plan when previous manifest is nil", func() {
+				generated, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					defaultRequestParameters,
+					nil,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("dedicated-extensions"))
+				Expect(generated.Configs).ToNot(HaveKey(adapter.CloudConfigKey))
+			})
 
-			requestParams := map[string]interface{}{
-				"parameters": map[string]interface{}{
-					adapter.VMExtensionsConfigKey: string(vmExtensionsConfig),
-				},
-			}
+			It("uses the vm_extensions from plan when redis-server instance group is not found", func() {
+				oldManifest := createDefaultOldManifest()
+				oldManifest.InstanceGroups[0].VMExtensions = append(oldManifest.InstanceGroups[0].VMExtensions, "old-extension")
 
-			oldManifest := createDefaultOldManifest()
+				generated, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					defaultRequestParameters,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("dedicated-extensions"))
+				Expect(generated.Configs).ToNot(HaveKey(adapter.CloudConfigKey))
+			})
 
-			generated, err := generateManifest(
-				manifestGenerator,
-				defaultServiceReleases,
-				dedicatedPlan,
-				requestParams,
-				&oldManifest,
-				nil,
-				nil,
-				nil,
-			)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("my-vm-extension"))
-			Expect(generated.Configs[adapter.CloudConfigKey]).To(Equal(string(vmExtensionsConfig)))
+			It("uses the vm_extensions from previous manifest", func() {
+				oldManifest := createDefaultOldManifest()
+				oldManifest.InstanceGroups[0].Name = "redis-server"
+				oldManifest.InstanceGroups[0].VMExtensions = append(oldManifest.InstanceGroups[0].VMExtensions, "old-extension")
+
+				generated, err := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					dedicatedPlan,
+					defaultRequestParameters,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).ToNot(ContainElement("dedicated-extensions"))
+				Expect(generated.Manifest.InstanceGroups[0].VMExtensions).To(ContainElement("old-extension"))
+				Expect(generated.Configs).ToNot(HaveKey(adapter.CloudConfigKey))
+			})
 		})
 
 		It("returns an error when invalid arbitrary parameters are set", func() {
