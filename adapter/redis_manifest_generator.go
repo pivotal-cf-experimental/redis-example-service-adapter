@@ -13,7 +13,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -71,9 +71,9 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		m.Config.IgnoreODBManagedSecretOnUpdate = true
 	}
 
-	vmExtensionConfig := ""
-	if requestParamsVMExtensionConfig, found := params.RequestParams.ArbitraryParams()[VMExtensionsConfigKey]; found {
-		vmExtensionConfig = requestParamsVMExtensionConfig.(string)
+	vmExtensionsConfig := ""
+	if requestParamsVMExtensionsConfig, found := params.RequestParams.ArbitraryParams()[VMExtensionsConfigKey]; found {
+		vmExtensionsConfig = requestParamsVMExtensionsConfig.(string)
 	}
 
 	redisServerInstanceGroup := m.findRedisServerInstanceGroup(params.Plan)
@@ -137,27 +137,27 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		})
 	}
 
+	redisServerVMExtensions, err := m.gatherRedisServerVMExtensions(
+		redisServerInstanceGroup.VMExtensions,
+		vmExtensionsConfig,
+		params.PreviousManifest,
+	)
+	if err != nil {
+		return serviceadapter.GenerateManifestOutput{}, err
+	}
+
 	newRedisInstanceGroup := bosh.InstanceGroup{
 		Name:               redisServerInstanceGroup.Name,
 		Instances:          redisServerInstanceGroup.Instances,
 		Jobs:               redisServerInstanceJobs,
 		VMType:             redisServerInstanceGroup.VMType,
-		VMExtensions:       redisServerInstanceGroup.VMExtensions,
+		VMExtensions:       redisServerVMExtensions,
 		PersistentDiskType: redisServerInstanceGroup.PersistentDiskType,
 		Stemcell:           stemcellAlias,
 		Networks:           redisServerNetworks,
 		AZs:                redisServerInstanceGroup.AZs,
 		Properties:         redisProperties,
 		MigratedFrom:       migrations,
-	}
-	if vmExtensionConfig != "" {
-		vmExtensionNames, err := gatherVMExtensionNames(vmExtensionConfig)
-		if err != nil {
-			return serviceadapter.GenerateManifestOutput{}, err
-		}
-		if len(vmExtensionNames) > 0 {
-			newRedisInstanceGroup.VMExtensions = append(newRedisInstanceGroup.VMExtensions, vmExtensionNames...)
-		}
 	}
 
 	instanceGroups := []bosh.InstanceGroup{newRedisInstanceGroup}
@@ -265,8 +265,8 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 	newSecrets[ManagedSecretKey] = managedSecretValue
 
 	newConfigs := serviceadapter.BOSHConfigs{}
-	if vmExtensionConfig != "" {
-		newConfigs[CloudConfigKey] = vmExtensionConfig
+	if vmExtensionsConfig != "" {
+		newConfigs[CloudConfigKey] = vmExtensionsConfig
 	}
 
 	return serviceadapter.GenerateManifestOutput{
@@ -642,6 +642,41 @@ func (m *ManifestGenerator) validUpgradePath(previousManifest bosh.BoshManifest,
 	return nil
 }
 
+func findInstanceGroupFromPreviousManifest(previousManifest bosh.BoshManifest, instanceGroupName string) *bosh.InstanceGroup {
+	for _, instanceGroup := range previousManifest.InstanceGroups {
+		if instanceGroup.Name == instanceGroupName {
+			return &instanceGroup
+		}
+	}
+
+	return nil
+}
+
+func (m *ManifestGenerator) findRedisServerInstanceGroupFromPreviousManifest(previousManifest bosh.BoshManifest) *bosh.InstanceGroup {
+	return findInstanceGroupFromPreviousManifest(previousManifest, m.Config.RedisInstanceGroupName)
+}
+
+func (m *ManifestGenerator) gatherRedisServerVMExtensions(
+	vmExtensions serviceadapter.VMExtensions,
+	vmExtensionsConfig string,
+	previousManifest *bosh.BoshManifest,
+) (serviceadapter.VMExtensions, error) {
+	if vmExtensionsConfig != "" {
+		vmExtensionNames, err := parseVMExtensionsConfig(vmExtensionsConfig)
+		if err != nil {
+			return vmExtensions, err
+		}
+		vmExtensions = append(vmExtensions, vmExtensionNames...)
+	} else if previousManifest != nil {
+		redisServerInstanceGroup := m.findRedisServerInstanceGroupFromPreviousManifest(*previousManifest)
+		if redisServerInstanceGroup != nil {
+			vmExtensions = redisServerInstanceGroup.VMExtensions
+		}
+	}
+
+	return vmExtensions, nil
+}
+
 type VMExtension struct {
 	Name            string                 `yaml:"name"`
 	CloudProperties map[string]interface{} `yaml:"cloud_properties"`
@@ -651,8 +686,8 @@ type CloudConfig struct {
 	VMExtensions []VMExtension `yaml:"vm_extensions"`
 }
 
-func gatherVMExtensionNames(vmExtensionsConfig string) ([]string, error) {
-	var vmExtensionNames []string
+func parseVMExtensionsConfig(vmExtensionsConfig string) (serviceadapter.VMExtensions, error) {
+	var vmExtensionNames serviceadapter.VMExtensions
 	cloudConfig := CloudConfig{}
 	if err := yaml.Unmarshal([]byte(vmExtensionsConfig), &cloudConfig); err != nil {
 		return vmExtensionNames, err
