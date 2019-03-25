@@ -43,7 +43,7 @@ func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (servic
 		for _, field := range manifestSecretPaths {
 			var ok bool
 			manifestSecret := field.Name
-			path, ok := redisPlanProperties(params.Manifest)[manifestSecret].(string)
+			path, ok := redisPlanProperties(params.Manifest)[manifestSecret].(string) // ((/odb/....))
 			if !ok || path == "" {
 				err := fmt.Errorf("could not find path for " + manifestSecret)
 				b.StderrLogger.Println(err.Error())
@@ -65,27 +65,23 @@ func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (servic
 				return serviceadapter.Binding{}, err
 			}
 
-			value := params.Secrets[path]
+			value, ok := params.Secrets[path]
 			if !ok || value == "" {
 				err := errors.New("manifest wasn't correctly interpolated: missing value for `" + path + "`")
 				b.StderrLogger.Println(err.Error())
 				return serviceadapter.Binding{}, err
 			}
-			resolvedSecrets[path] = value
+			resolvedSecrets[field.Name] = value
 		}
 	}
 
-	var secretKey string
-	if value, ok := redisPlanProperties(params.Manifest)["secret"].(string); ok {
-		secretKey = value
-	}
 	return serviceadapter.Binding{
 		Credentials: map[string]interface{}{
 			"host":                      redisHost,
 			"port":                      RedisServerPort,
 			"generated_secret":          resolvedSecrets[GeneratedSecretKey],
 			"password":                  redisPlanProperties(params.Manifest)["password"].(string),
-			"secret":                    resolvedSecrets[secretKey],
+			"secret":                    resolvedSecrets["secret"],
 			"odb_managed_secret":        resolvedSecrets[ManagedSecretKey],
 			"dns_addresses":             params.DNSAddresses,
 			"passed_in_secrets":         params.Secrets,
