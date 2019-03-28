@@ -13,7 +13,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -226,8 +226,8 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		Stemcells: []bosh.Stemcell{
 			{
 				Alias:   stemcellAlias,
-				OS:      params.ServiceDeployment.Stemcell.OS,
-				Version: params.ServiceDeployment.Stemcell.Version,
+				OS:      params.ServiceDeployment.Stemcells[0].OS,
+				Version: params.ServiceDeployment.Stemcells[0].Version,
 			},
 		},
 		InstanceGroups: instanceGroups,

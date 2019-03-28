@@ -1539,10 +1539,10 @@ func generateManifest(
 	return manifestGenerator.GenerateManifest(serviceadapter.GenerateManifestParams{
 		ServiceDeployment: serviceadapter.ServiceDeployment{
 			DeploymentName: "some-instance-id",
-			Stemcell: serviceadapter.Stemcell{
+			Stemcells: []serviceadapter.Stemcell{{
 				OS:      "some-stemcell-os",
 				Version: "1234",
-			},
+			}},
 			Releases: serviceReleases,
 		},
 		Plan:             plan,
