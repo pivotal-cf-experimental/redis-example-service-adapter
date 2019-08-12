@@ -241,6 +241,7 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 			{
 				Name:    CertificateVariableName,
 				Type:    "certificate",
+				UpdateMode: "no-overwrite",
 				Options: map[string]interface{}{"is_ca": true, "common_name": "redis"},
 				Consumes: &bosh.VariableConsumes{
 					AlternativeName: bosh.VariableConsumesLink{
