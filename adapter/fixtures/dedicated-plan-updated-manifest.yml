@@ -75,6 +75,7 @@ variables:
   type: password
 - name: instance_certificate
   type: certificate
+  update_mode: no-overwrite
   options:
     is_ca: true
     common_name: redis
