@@ -117,7 +117,7 @@
     "serviceadapter",
   ]
   pruneopts = "UT"
-  revision = "22e2d44d4329887aa16cb851b06fb1729e877a92"
+  revision = "9438a0c71c4b9e65793025079183e121bce12563"
 
 [[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
