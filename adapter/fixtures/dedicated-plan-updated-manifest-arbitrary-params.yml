@@ -17,6 +17,16 @@ instance_groups:
     custom_provider_definitions:
       - name: redis-server-link
         type: address
+    properties:
+      redis:
+        maxclients: 56
+        password: some-password
+        persistence: "yes"
+        generated_secret: ((secret_pass))
+        odb_managed_secret: ((odb_secret:odb_managed_secret))
+        ca_cert: ((instance_certificate.ca))
+        certificate: ((instance_certificate.certificate))
+        private_key: ((instance_certificate.private_key))
   vm_type: dedicated-vm
   vm_extensions:
   - dedicated-extensions
@@ -27,16 +37,6 @@ instance_groups:
   - dedicated-az2
   networks:
   - name: dedicated-network
-  properties:
-    redis:
-      maxclients: 56
-      password: some-password
-      persistence: "yes"
-      generated_secret: ((secret_pass))
-      odb_managed_secret: ((odb_secret:odb_managed_secret))
-      ca_cert: ((instance_certificate.ca))
-      certificate: ((instance_certificate.certificate))
-      private_key: ((instance_certificate.private_key))
 - name: health-check
   lifecycle: errand
   instances: 1

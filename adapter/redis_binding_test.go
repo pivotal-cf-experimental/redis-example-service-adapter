@@ -38,16 +38,20 @@ var _ = Describe("Binding", func() {
 		BeforeEach(func() {
 			manifest = bosh.BoshManifest{
 				InstanceGroups: []bosh.InstanceGroup{
-					bosh.InstanceGroup{
-						Properties: map[string]interface{}{
-							"redis": map[interface{}]interface{}{
-								"password":                 "supersecret",
-								adapter.GeneratedSecretKey: path(adapter.GeneratedSecretKey),
-								adapter.ManagedSecretKey:   path(adapter.ManagedSecretKey),
-								"ca_cert":                  "((instance_certificate.ca))",
-								"private_key":              "((instance_certificate.private_key))",
-								"certificate":              "((instance_certificate.certificate))",
-								"secret":                   "((default_secret))",
+					{
+						Jobs: []bosh.Job{
+							{
+								Properties: map[string]interface{}{
+									"redis": map[interface{}]interface{}{
+										"password":                 "supersecret",
+										adapter.GeneratedSecretKey: path(adapter.GeneratedSecretKey),
+										adapter.ManagedSecretKey:   path(adapter.ManagedSecretKey),
+										"ca_cert":                  "((instance_certificate.ca))",
+										"private_key":              "((instance_certificate.private_key))",
+										"certificate":              "((instance_certificate.certificate))",
+										"secret":                   "((default_secret))",
+									},
+								},
 							},
 						},
 					},
@@ -55,10 +59,11 @@ var _ = Describe("Binding", func() {
 			}
 		})
 
+
 		DescribeTable("binding",
 			func(secretPath string, resolvedSecrets serviceadapter.ManifestSecrets, secretInBinding string, expectedErr error) {
 				if secretPath != "" {
-					properties := manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+					properties := manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})
 					properties["secret"] = secretPath
 				}
 				params := serviceadapter.CreateBindingParams{
@@ -202,7 +207,11 @@ var _ = Describe("Binding", func() {
 			currentManifest = bosh.BoshManifest{
 				InstanceGroups: []bosh.InstanceGroup{
 					{
-						Properties: map[string]interface{}{"redis": map[interface{}]interface{}{"password": expectedPassword}},
+						Jobs: []bosh.Job{
+							{
+								Properties: map[string]interface{}{"redis": map[interface{}]interface{}{"password": expectedPassword}},
+							},
+						},
 					},
 				},
 			}

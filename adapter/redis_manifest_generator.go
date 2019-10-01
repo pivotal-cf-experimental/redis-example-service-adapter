@@ -98,18 +98,11 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		return serviceadapter.GenerateManifestOutput{}, err
 	}
 
-	releases := []bosh.Release{}
-	for _, release := range params.ServiceDeployment.Releases {
-		releases = append(releases, bosh.Release{
-			Name:    release.Name,
-			Version: release.Version,
-		})
-	}
-
 	redisServerJob, err := m.gatherRedisServerJob(params.ServiceDeployment.Releases)
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
 	}
+	redisServerJob.Properties = redisProperties
 
 	redisServerInstanceJobs := []bosh.Job{redisServerJob}
 
@@ -156,7 +149,6 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		Stemcell:           stemcellAlias,
 		Networks:           redisServerNetworks,
 		AZs:                redisServerInstanceGroup.AZs,
-		Properties:         redisProperties,
 		MigratedFrom:       migrations,
 	}
 
@@ -220,6 +212,14 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		})
 	}
 
+	releases := []bosh.Release{}
+	for _, release := range params.ServiceDeployment.Releases {
+		releases = append(releases, bosh.Release{
+			Name:    release.Name,
+			Version: release.Version,
+		})
+	}
+
 	newManifest := bosh.BoshManifest{
 		Name:     params.ServiceDeployment.DeploymentName,
 		Releases: releases,
@@ -239,10 +239,10 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		Variables: []bosh.Variable{
 			{Name: GeneratedSecretVariableName, Type: "password"},
 			{
-				Name:    CertificateVariableName,
-				Type:    "certificate",
+				Name:       CertificateVariableName,
+				Type:       "certificate",
 				UpdateMode: "no-overwrite",
-				Options: map[string]interface{}{"is_ca": true, "common_name": "redis"},
+				Options:    map[string]interface{}{"is_ca": true, "common_name": "redis"},
 				Consumes: &bosh.VariableConsumes{
 					AlternativeName: bosh.VariableConsumesLink{
 						From:       "redis-server-link",
@@ -445,7 +445,7 @@ func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleas
 }
 
 func redisPlanProperties(manifest bosh.BoshManifest) map[interface{}]interface{} {
-	return manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+	return manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})
 }
 
 func (m ManifestGenerator) redisServerProperties(
@@ -490,7 +490,7 @@ func (m ManifestGenerator) redisServerProperties(
 		newSecrets[secretKey] = secretFromPlan
 		planSecret := fmt.Sprintf("((%s:%s))", serviceadapter.ODBSecretPrefix, secretKey)
 		if previousSecrets != nil {
-			existingCredhubPath, ok := previousManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+			existingCredhubPath, ok := previousManifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
 			if ok && previousSecrets[existingCredhubPath.(string)] == secretFromPlan {
 				planSecret = existingCredhubPath.(string)
 				delete(newSecrets, secretKey)

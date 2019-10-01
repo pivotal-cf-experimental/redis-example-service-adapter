@@ -117,7 +117,6 @@ var _ = Describe("Redis Service Adapter", func() {
 		config.SecureManifestsEnabled = true
 		config.RedisInstanceGroupName = "redis-server"
 		manifestGenerator = adapter.ManifestGenerator{Config: config, StderrLogger: stderrLogger}
-
 	})
 
 	Describe("Generating manifests", func() {
@@ -137,9 +136,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 			Expect(generateErr).NotTo(HaveOccurred())
 			Expect(
-				generated.Manifest.
-					InstanceGroups[0].
-					Properties["redis"].(map[interface{}]interface{})["persistence"],
+				generated.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["persistence"],
 			).To(Equal("no"))
 		})
 
@@ -604,7 +601,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 
-			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
+			Expect(generated.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["maxclients"]).To(Equal(22))
 		})
 
 		It("uses that value in secrets map when odb_managed_secret is set in arbitrary parameters", func() {
@@ -650,7 +647,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(generated.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
+			Expect(generated.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("((/foo))"))
 		})
 
 		Context("when vm_extensions_config arbitrary parameter is set", func() {
@@ -1193,7 +1190,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 		It("sets the secret property using the old manifest value when credhub_secret_path not present in arbitrary parameters", func() {
 			oldManifest := createDefaultOldManifest()
-			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"] = "/some/special/path"
+			oldManifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["secret"] = "/some/special/path"
 			emptyArbitraryParams := map[string]interface{}{}
 
 			generatedManifest, generatedErr := generateManifest(
@@ -1208,7 +1205,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).ToNot(HaveOccurred())
-			Expect(generatedManifest.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("/some/special/path"))
+			Expect(generatedManifest.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["secret"]).To(Equal("/some/special/path"))
 		})
 
 		It("sets the expected update block when the plan update block is empty and old manifest exists", func() {
@@ -1236,7 +1233,7 @@ var _ = Describe("Redis Service Adapter", func() {
 
 		It("does not generate a manifest with odb prefix when previous manifest contains an existing credhub name", func() {
 			oldManifest := createDefaultOldManifest()
-			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
+			oldManifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
 
 			manifestOutput, generateErr := generateManifest(
 				manifestGenerator,
@@ -1249,13 +1246,13 @@ var _ = Describe("Redis Service Adapter", func() {
 				nil,
 			)
 			Expect(generateErr).ToNot(HaveOccurred())
-			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
+			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
 			Expect(odbManagedSecret.(string)).To(Equal("((/odb/generated/path/yeee))"))
 		})
 
 		It("does not retrieve ODB managed secret from previous manifest when IgnoreODBManagedSecretOnUpdate config flag is true", func() {
 			oldManifest := createDefaultOldManifest()
-			oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
+			oldManifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey] = "((/odb/generated/path/yeee))"
 
 			manifestGenerator.Config.IgnoreODBManagedSecretOnUpdate = true
 
@@ -1271,7 +1268,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			)
 
 			Expect(generatedErr).NotTo(HaveOccurred())
-			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
+			odbManagedSecret := manifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})[adapter.ManagedSecretKey]
 			Expect(odbManagedSecret.(string)).To(Equal("((" + serviceadapter.ODBSecretPrefix + ":" + adapter.ManagedSecretKey + "))"))
 		})
 
@@ -1284,7 +1281,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			BeforeEach(func() {
 				oldManifest = createDefaultOldManifest()
 				oldManifest.InstanceGroups[0].Name = config.RedisInstanceGroupName
-				oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"] = "((/odb/managed/path/to/plan_secret))"
+				oldManifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"] = "((/odb/managed/path/to/plan_secret))"
 
 				planWithSecret = serviceadapter.Plan{
 					Properties: map[string]interface{}{
@@ -1319,7 +1316,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				)
 				Expect(err).NotTo(HaveOccurred())
 
-				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
 				Expect(actualSecret).To(Equal(existingSecretCredhubPath))
 
 				_, isSet := manifestOutput.ODBManagedSecrets["plan_secret"]
@@ -1341,7 +1338,7 @@ var _ = Describe("Redis Service Adapter", func() {
 				)
 				Expect(err).NotTo(HaveOccurred())
 
-				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				actualSecret := manifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
 
 				secretKey := getSecretKey(manifestOutput.ODBManagedSecrets, "plansecret")
 				Expect(secretKey).ToNot(BeEmpty())
@@ -1399,7 +1396,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					nil,
 				)
 				Expect(err).NotTo(HaveOccurred())
-				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
 				Expect(found).To(BeFalse(), "should not have plan_secret key in manifest")
 				for key, _ := range provisionManifestOutput.ODBManagedSecrets {
 					Expect(key).ToNot(HavePrefix("plan_secret_key"))
@@ -1421,7 +1418,7 @@ var _ = Describe("Redis Service Adapter", func() {
 					nil,
 				)
 				Expect(err).NotTo(HaveOccurred())
-				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
+				_, found := provisionManifestOutput.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})["plan_secret"]
 				Expect(found).To(BeFalse(), "should not have plan_secret key in manifest")
 				for key, _ := range provisionManifestOutput.ODBManagedSecrets {
 					Expect(key).ToNot(HavePrefix("plan_secret_key"))
@@ -1505,13 +1502,17 @@ func createDefaultOldManifest() bosh.BoshManifest {
 			{Name: "some-release-name", Version: "4"},
 		},
 		InstanceGroups: []bosh.InstanceGroup{
-			{Properties: map[string]interface{}{
-				"redis": map[interface{}]interface{}{
-					"password":    "some-password",
-					"persistence": "this is the old value",
-					"maxclients":  47,
-				},
-			}}},
+			{
+				Jobs: []bosh.Job{{
+				Properties: map[string]interface{}{
+					"redis": map[interface{}]interface{}{
+						"password":    "some-password",
+						"persistence": "this is the old value",
+						"maxclients":  47,
+					},
+				}},
+			}},
+		},
 	}
 }
 
@@ -1564,5 +1565,5 @@ func containsJobName(list []bosh.Job, query string) bool {
 }
 
 func removePlanSecret(manifest bosh.BoshManifest) {
-	delete(manifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{}), "plan_secret")
+	delete(manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{}), "plan_secret")
 }
