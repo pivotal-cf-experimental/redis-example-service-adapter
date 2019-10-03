@@ -145,11 +145,11 @@
 
 [[projects]]
   branch = "v2"
-  digest = "1:2d56cd111a870bdf3ee37601877effe1fc79b8983645c147846f4769b6eb7051"
+  digest = "1:d09d57357da185f01b7ae0238df576d386caa6f4d4841c828fb823d2be76f956"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "7b8349ac747c6a24702b762d2c4fd9266cf4f1d6"
+  revision = "970885f01c8bc1fecb7ab1c8ce8e7609bda45530"
 
 [solve-meta]
   analyzer-name = "dep"
