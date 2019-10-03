@@ -445,7 +445,11 @@ func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleas
 }
 
 func redisPlanProperties(manifest bosh.BoshManifest) map[interface{}]interface{} {
-	return manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})
+	jobProperties, found := manifest.InstanceGroups[0].Jobs[0].Properties["redis"]
+	if !found {
+		jobProperties =  manifest.InstanceGroups[0].Properties["redis"]
+	}
+	return jobProperties.(map[interface{}]interface{})
 }
 
 func (m ManifestGenerator) redisServerProperties(

@@ -16,7 +16,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Redis Service Adapter", func() {
@@ -1488,6 +1488,30 @@ var _ = Describe("Redis Service Adapter", func() {
 			}
 
 		})
+
+		Describe("when previous manifest contains instance_group level properties", func() {
+			It("moves the properties to the job level properties", func() {
+				oldManifest := createOldManifestWithInstanceGroupProperties()
+
+				generated, generateErr := generateManifest(
+					manifestGenerator,
+					defaultServiceReleases,
+					highMemoryPlan,
+					defaultRequestParameters,
+					&oldManifest,
+					nil,
+					nil,
+					nil,
+				)
+
+				Expect(generateErr).NotTo(HaveOccurred())
+				newProperties := generated.Manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{})
+				oldProperties := oldManifest.InstanceGroups[0].Properties["redis"].(map[interface{}]interface{})
+
+				Expect(newProperties["password"]).To(Equal(oldProperties["password"]))
+				Expect(newProperties["maxclients"]).To(Equal(oldProperties["maxclients"]))
+			})
+		})
 	})
 
 })
@@ -1504,14 +1528,32 @@ func createDefaultOldManifest() bosh.BoshManifest {
 		InstanceGroups: []bosh.InstanceGroup{
 			{
 				Jobs: []bosh.Job{{
+					Properties: map[string]interface{}{
+						"redis": map[interface{}]interface{}{
+							"password":    "some-password",
+							"persistence": "this is the old value",
+							"maxclients":  47,
+						},
+					}},
+				}},
+		},
+	}
+}
+
+func createOldManifestWithInstanceGroupProperties() bosh.BoshManifest {
+	return bosh.BoshManifest{
+		Releases: []bosh.Release{
+			{Name: "some-release-name", Version: "4"},
+		},
+		InstanceGroups: []bosh.InstanceGroup{
+			{
+				Jobs: []bosh.Job{{}},
 				Properties: map[string]interface{}{
 					"redis": map[interface{}]interface{}{
-						"password":    "some-password",
-						"persistence": "this is the old value",
-						"maxclients":  47,
+						"password":   "old-some-password",
+						"maxclients": 77,
 					},
 				}},
-			}},
 		},
 	}
 }
