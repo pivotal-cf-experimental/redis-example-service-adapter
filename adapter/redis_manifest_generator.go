@@ -367,11 +367,12 @@ func parseReleaseVersion(versionString string) (int, int, int, error) {
 func generateUpdateBlock(update *serviceadapter.Update, previousManifest *bosh.BoshManifest) *bosh.Update {
 	if update != nil {
 		return &bosh.Update{
-			Canaries:        update.Canaries,
-			MaxInFlight:     update.MaxInFlight,
-			CanaryWatchTime: update.CanaryWatchTime,
-			UpdateWatchTime: update.UpdateWatchTime,
-			Serial:          update.Serial,
+			Canaries:                      update.Canaries,
+			CanaryWatchTime:               update.CanaryWatchTime,
+			UpdateWatchTime:               update.UpdateWatchTime,
+			MaxInFlight:                   update.MaxInFlight,
+			Serial:                        update.Serial,
+			InitialDeployAZUpdateStrategy: bosh.ParallelUpdate,
 		}
 	} else {
 		updateBlock := &bosh.Update{
@@ -447,7 +448,7 @@ func findReleaseForJob(requiredJob string, releases serviceadapter.ServiceReleas
 func redisPlanProperties(manifest bosh.BoshManifest) map[interface{}]interface{} {
 	jobProperties, found := manifest.InstanceGroups[0].Jobs[0].Properties["redis"]
 	if !found {
-		jobProperties =  manifest.InstanceGroups[0].Properties["redis"]
+		jobProperties = manifest.InstanceGroups[0].Properties["redis"]
 	}
 	return jobProperties.(map[interface{}]interface{})
 }

@@ -73,11 +73,12 @@ var _ = Describe("Redis Service Adapter", func() {
 				},
 			},
 			Update: &serviceadapter.Update{
-				Canaries:        1,
-				CanaryWatchTime: "100-200",
-				UpdateWatchTime: "100-200",
-				MaxInFlight:     5,
-				Serial:          nil,
+				Canaries:                      1,
+				CanaryWatchTime:               "100-200",
+				UpdateWatchTime:               "100-200",
+				MaxInFlight:                   5,
+				Serial:                        nil,
+				InitialDeployAZUpdateStrategy: bosh.SerialUpdate,
 			},
 		}
 
