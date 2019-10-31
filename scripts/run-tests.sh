@@ -1,3 +1,3 @@
 #!/bin/bash -eu
 
-ginkgo -randomizeSuites=true -randomizeAllSpecs=true -keepGoing=true -r "$@"
+go run github.com/onsi/ginkgo/ginkgo -randomizeSuites=true -randomizeAllSpecs=true -keepGoing=true -r "$@"
