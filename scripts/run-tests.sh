@@ -1,3 +1,3 @@
 #!/bin/bash -eu
 
-go run github.com/onsi/ginkgo/ginkgo -randomizeSuites=true -randomizeAllSpecs=true -keepGoing=true -r "$@"
+GOFLAGS="-mod=vendor" go run github.com/onsi/ginkgo/ginkgo -randomizeSuites=true -randomizeAllSpecs=true -keepGoing=true -r "$@"
