@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.8.0
+	github.com/onsi/gomega v1.8.1
 	github.com/pborman/uuid v1.2.0
 	github.com/pivotal-cf/on-demand-services-sdk v0.36.1-0.20191219102329-474067671563
 	github.com/pkg/errors v0.8.1
