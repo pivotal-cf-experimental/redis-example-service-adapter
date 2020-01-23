@@ -8,5 +8,5 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/pivotal-cf/on-demand-services-sdk v0.36.1-0.20191219163651-c0f223656fd9
 	github.com/pkg/errors v0.8.1
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 )
