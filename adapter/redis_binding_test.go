@@ -59,7 +59,6 @@ var _ = Describe("Binding", func() {
 			}
 		})
 
-
 		DescribeTable("binding",
 			func(secretPath string, resolvedSecrets serviceadapter.ManifestSecrets, secretInBinding string, expectedErr error) {
 				if secretPath != "" {
@@ -110,6 +109,32 @@ var _ = Describe("Binding", func() {
 				s, ok := binding.Credentials["dns_addresses"]
 				Expect(ok).To(BeTrue(), "DNS address not found in binding.Credentials")
 				Expect(s).To(Equal(dnsAddresses))
+			})
+		})
+
+		Describe("Backup agent url", func() {
+			When("bind_resource.backup_agent is set to true", func() {
+				It("returns the backup agent url", func() {
+					params = serviceadapter.RequestParameters{
+						"context": map[string]interface{}{
+							"platform": "cloudfoundry",
+						},
+						"bind_resource": map[string]interface{}{
+							"backup_agent": true,
+						},
+					}
+					params := serviceadapter.CreateBindingParams{
+						BindingID:          bindingID,
+						DeploymentTopology: topology,
+						Manifest:           manifest,
+						RequestParams:      params,
+						Secrets:            defaultMap(),
+					}
+					binding, err := binder.CreateBinding(params)
+					Expect(err).NotTo(HaveOccurred())
+					s := binding.BackupAgentURL
+					Expect(s).To(Equal("http://www.example.com/backup-agent-url"))
+				})
 			})
 		})
 	})

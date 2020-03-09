@@ -16,6 +16,12 @@ type Binder struct {
 }
 
 func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (serviceadapter.Binding, error) {
+	if params.RequestParams.BindResource().BackupAgent {
+		return serviceadapter.Binding{
+			BackupAgentURL: "http://www.example.com/backup-agent-url",
+		}, nil
+	}
+
 	ctx := params.RequestParams.ArbitraryContext()
 	platform := params.RequestParams.Platform()
 	if len(ctx) == 0 || platform == "" || platform != "cloudfoundry" {
