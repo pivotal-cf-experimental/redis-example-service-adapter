@@ -115,19 +115,18 @@ var _ = Describe("Binding", func() {
 		Describe("Backup agent url", func() {
 			When("bind_resource.backup_agent is set to true", func() {
 				It("returns the backup agent url", func() {
-					params = serviceadapter.RequestParameters{
-						"context": map[string]interface{}{
-							"platform": "cloudfoundry",
-						},
-						"bind_resource": map[string]interface{}{
-							"backup_agent": true,
-						},
-					}
 					params := serviceadapter.CreateBindingParams{
 						BindingID:          bindingID,
 						DeploymentTopology: topology,
 						Manifest:           manifest,
-						RequestParams:      params,
+						RequestParams:      serviceadapter.RequestParameters{
+							"context": map[string]interface{}{
+								"platform": "cloudfoundry",
+							},
+							"bind_resource": map[string]interface{}{
+								"backup_agent": true,
+							},
+						},
 						Secrets:            defaultMap(),
 					}
 					binding, err := binder.CreateBinding(params)
