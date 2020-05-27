@@ -3,6 +3,7 @@ package adapter
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -92,6 +93,7 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 		params.PreviousManifest,
 		newSecrets,
 		params.PreviousSecrets,
+		params.ServiceInstanceUAAClient,
 	)
 	if err != nil {
 		return serviceadapter.GenerateManifestOutput{}, err
@@ -458,7 +460,8 @@ func (m ManifestGenerator) redisServerProperties(
 	arbitraryParams map[string]interface{},
 	previousManifest *bosh.BoshManifest,
 	newSecrets serviceadapter.ODBManagedSecrets,
-	previousSecrets serviceadapter.ManifestSecrets) (map[string]interface{}, error) {
+	previousSecrets serviceadapter.ManifestSecrets,
+	serviceInstanceClient *serviceadapter.ServiceInstanceUAAClient) (map[string]interface{}, error) {
 	var previousRedisProperties map[interface{}]interface{}
 	if previousManifest != nil {
 		previousRedisProperties = redisPlanProperties(*previousManifest)
@@ -487,6 +490,10 @@ func (m ManifestGenerator) redisServerProperties(
 		"ca_cert":          "((" + CertificateVariableName + ".ca))",
 		"certificate":      "((" + CertificateVariableName + ".certificate))",
 		"private_key":      "((" + CertificateVariableName + ".private_key))",
+	}
+
+	if serviceInstanceClient != nil {
+		properties["service_instance_client"] = toMap(serviceInstanceClient)
 	}
 
 	if secretFromPlan, exists := planProperties["plan_secret"]; exists && m.Config.SecureManifestsEnabled {
@@ -701,4 +708,16 @@ func parseVMExtensionsConfig(vmExtensionsConfig string) (serviceadapter.VMExtens
 		vmExtensionNames = append(vmExtensionNames, vmExtension.Name)
 	}
 	return vmExtensionNames, nil
+}
+
+func toMap(s interface{}) map[string]string {
+	data, err := json.Marshal(s)
+
+	if err != nil {
+		return nil
+	}
+
+	var m map[string]string
+	_ = json.Unmarshal(data, &m)
+	return m
 }
