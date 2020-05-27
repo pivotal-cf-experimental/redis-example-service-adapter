@@ -44,7 +44,6 @@ type ManifestGenerator struct {
 }
 
 func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManifestParams) (serviceadapter.GenerateManifestOutput, error) {
-
 	ctx := params.RequestParams.ArbitraryContext()
 	platform := params.RequestParams.Platform()
 	if len(ctx) == 0 || platform != "cloudfoundry" {

@@ -54,6 +54,14 @@ github.com/pivotal-cf/on-demand-services-sdk v0.38.1-0.20200303140208-545aed61c1
 github.com/pivotal-cf/on-demand-services-sdk v0.38.1-0.20200303140208-545aed61c1b7/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
 github.com/pivotal-cf/on-demand-services-sdk v0.38.1-0.20200303145530-e68f59fd6c6d h1:UvmHOVdwOlVJib+E/TMaGSpgqiTBhv+GGy4ozVbTcsc=
 github.com/pivotal-cf/on-demand-services-sdk v0.38.1-0.20200303145530-e68f59fd6c6d/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200526144324-0d66454eda39 h1:p5RHcb0u6teljuXWxnNqfP+X8vYefdM5wPqO6N92BAQ=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200526144324-0d66454eda39/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527093944-da98874317b1 h1:4mFMX7nV3ArWfmgg8wcMEbCBhzz2V4x1bBjzx1gdcus=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527093944-da98874317b1/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527100213-d0b0ed013a8b h1:7ESQvI+WfBfnguKSl/Khc8qvGWCxdlKcwihlWV11TMY=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527100213-d0b0ed013a8b/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527101908-57a1c2ef97bd h1:Pod8f6DH4BoMztgg5ghjDnPZrlEYuAsi6mP2EmjtxAQ=
+github.com/pivotal-cf/on-demand-services-sdk v0.39.1-0.20200527101908-57a1c2ef97bd/go.mod h1:MHOtG+Z0t80nszYb4MsAozBus8KRJ4rQPOZQ+kSSNek=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=

@@ -28,7 +28,7 @@ func (g *GenerateManifestAction) IsImplemented() bool {
 func (g *GenerateManifestAction) ParseArgs(reader io.Reader, args []string) (InputParams, error) {
 	var inputParams InputParams
 
-	if len(args) > 0 {
+	if len(args) > 0 { // Legacy positional arguments
 		if len(args) < 5 {
 			return inputParams, NewMissingArgsError("<service-deployment-JSON> <plan-JSON> <request-params-JSON> <previous-manifest-YAML> <previous-plan-JSON>")
 		}
@@ -60,6 +60,16 @@ func (g *GenerateManifestAction) ParseArgs(reader io.Reader, args []string) (Inp
 	}
 
 	return inputParams, nil
+}
+
+type ServiceInstanceUAAClient struct {
+	Authorities          string `json:"authorities"`
+	AuthorizedGrantTypes string `json:"authorized_grant_types"`
+	ClientID             string `json:"client_id"`
+	ClientSecret         string `json:"client_secret"`
+	Name                 string `json:"name"`
+	ResourceIDs          string `json:"resource_ids"`
+	Scopes               string `json:"scopes"`
 }
 
 func (g *GenerateManifestAction) Execute(inputParams InputParams, outputWriter io.Writer) (err error) {
@@ -115,14 +125,22 @@ func (g *GenerateManifestAction) Execute(inputParams InputParams, outputWriter i
 		}
 	}
 
+	var serviceInstanceClient *ServiceInstanceUAAClient
+	if generateManifestParams.ServiceInstanceUAAClient != "" {
+		if err = json.Unmarshal([]byte(generateManifestParams.ServiceInstanceUAAClient), &serviceInstanceClient); err != nil {
+			return errors.Wrap(err, "unmarshalling service instance client")
+		}
+	}
+
 	generateManifestOutput, err := g.manifestGenerator.GenerateManifest(GenerateManifestParams{
-		ServiceDeployment: serviceDeployment,
-		Plan:              plan,
-		RequestParams:     requestParams,
-		PreviousManifest:  previousManifest,
-		PreviousPlan:      previousPlan,
-		PreviousSecrets:   previousSecrets,
-		PreviousConfigs:   previousConfigs,
+		ServiceDeployment:        serviceDeployment,
+		Plan:                     plan,
+		RequestParams:            requestParams,
+		PreviousManifest:         previousManifest,
+		PreviousPlan:             previousPlan,
+		PreviousSecrets:          previousSecrets,
+		PreviousConfigs:          previousConfigs,
+		ServiceInstanceUAAClient: serviceInstanceClient,
 	})
 	if err != nil {
 		fmt.Fprintf(outputWriter, err.Error())
