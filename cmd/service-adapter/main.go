@@ -28,9 +28,12 @@ func main() {
 		Config:       config,
 	}
 
+	dashboardGenerator := adapter.DashboardGenerator{}
+
 	handler := serviceadapter.CommandLineHandler{
-		ManifestGenerator: manifestGenerator,
-		Binder:            binder,
+		ManifestGenerator:     manifestGenerator,
+		Binder:                binder,
+		DashboardURLGenerator: dashboardGenerator,
 	}
 
 	serviceadapter.HandleCLI(os.Args, handler)
