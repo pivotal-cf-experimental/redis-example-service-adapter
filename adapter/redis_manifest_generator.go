@@ -494,6 +494,10 @@ func (m ManifestGenerator) redisServerProperties(
 
 	if serviceInstanceClient != nil {
 		properties["service_instance_client"] = toMap(serviceInstanceClient)
+	} else {
+		if m, f := hasPreviousServiceInstanceClient(previousRedisProperties); f {
+			properties["service_instance_client"] = m
+		}
 	}
 
 	if secretFromPlan, exists := planProperties["plan_secret"]; exists && m.Config.SecureManifestsEnabled {
@@ -519,6 +523,17 @@ func (m ManifestGenerator) redisServerProperties(
 	return map[string]interface{}{
 		"redis": properties,
 	}, nil
+}
+
+func hasPreviousServiceInstanceClient(previousManifestProperties map[interface{}]interface{}) (interface{}, bool) {
+	if previousManifestProperties != nil {
+		clientDefinition := previousManifestProperties["service_instance_client"]
+		if clientDefinition != nil {
+			return clientDefinition, true
+		}
+	}
+
+	return nil, false
 }
 
 func managedSecretKeyForRedisServer(previousManifestProperties map[interface{}]interface{}, ignoreODBSecret bool) string {

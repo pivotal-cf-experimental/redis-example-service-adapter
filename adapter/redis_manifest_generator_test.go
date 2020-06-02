@@ -326,7 +326,7 @@ var _ = Describe("Redis Service Adapter", func() {
 			Expect(*generated.Manifest.Features.UseShortDNSAddresses).To(BeFalse())
 		})
 
-		It("includes the service instance client when passed", func() {
+		It("includes the service instance client when passed directly", func() {
 			client := &serviceadapter.ServiceInstanceUAAClient{
 				Authorities:          "admin,reader",
 				AuthorizedGrantTypes: "client_credentials,other",
@@ -337,6 +337,50 @@ var _ = Describe("Redis Service Adapter", func() {
 				Scopes:               "s1,s8",
 			}
 			generated, generateErr := generateManifest(manifestGenerator, defaultServiceReleases, dedicatedPlan, defaultRequestParameters, nil, nil, nil, nil, client)
+
+			Expect(generateErr).NotTo(HaveOccurred())
+			redisServerJob := generated.Manifest.InstanceGroups[0].Jobs[0]
+			Expect(redisServerJob.Name).To(Equal("redis-server"))
+			redisProps := redisServerJob.Properties["redis"].(map[interface{}]interface{})
+			Expect(redisProps["service_instance_client"].(map[string]string)).To(Equal(map[string]string{
+				"authorities":            "admin,reader",
+				"authorized_grant_types": "client_credentials,other",
+				"client_id":              "some-id",
+				"client_secret":          "some-secret",
+				"name":                   "some-name",
+				"resource_ids":           "r1,r2",
+				"scopes":                 "s1,s8",
+			}))
+		})
+
+		It("includes the service instance client when passed through the previous manifest", func() {
+			oldManifest := bosh.BoshManifest{
+				Releases: []bosh.Release{
+					{Name: "some-release-name", Version: "4"},
+				},
+				InstanceGroups: []bosh.InstanceGroup{
+					{
+						Jobs: []bosh.Job{{
+							Properties: map[string]interface{}{
+								"redis": map[interface{}]interface{}{
+									"password":    "some-password",
+									"persistence": "this is the old value",
+									"maxclients":  47,
+									"service_instance_client": map[string]string{
+										"authorities":            "admin,reader",
+										"authorized_grant_types": "client_credentials,other",
+										"client_id":              "some-id",
+										"client_secret":          "some-secret",
+										"name":                   "some-name",
+										"resource_ids":           "r1,r2",
+										"scopes":                 "s1,s8",
+									},
+								},
+							}},
+						}},
+				},
+			}
+			generated, generateErr := generateManifest(manifestGenerator, defaultServiceReleases, dedicatedPlan, defaultRequestParameters, &oldManifest, nil, nil, nil, nil)
 
 			Expect(generateErr).NotTo(HaveOccurred())
 			redisServerJob := generated.Manifest.InstanceGroups[0].Jobs[0]
