@@ -50,6 +50,9 @@ func (m ManifestGenerator) GenerateManifest(params serviceadapter.GenerateManife
 	if len(ctx) == 0 || platform != "cloudfoundry" {
 		m.StderrLogger.Println("Non Cloud Foundry platform (or pre OSBAPI 2.13) detected")
 	}
+
+	m.StderrLogger.Printf("\n\n[generate-manifest] Service Adapter received the following request context: %#v\n\n", ctx)
+
 	arbitraryParameters := params.RequestParams.ArbitraryParams()
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
