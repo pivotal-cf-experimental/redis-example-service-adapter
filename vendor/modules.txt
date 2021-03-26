@@ -59,7 +59,7 @@ github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
 # github.com/pborman/uuid v1.2.1
 github.com/pborman/uuid
-# github.com/pivotal-cf/brokerapi/v7 v7.4.0
+# github.com/pivotal-cf/brokerapi/v7 v7.5.0
 github.com/pivotal-cf/brokerapi/v7
 github.com/pivotal-cf/brokerapi/v7/auth
 github.com/pivotal-cf/brokerapi/v7/domain
@@ -67,7 +67,7 @@ github.com/pivotal-cf/brokerapi/v7/domain/apiresponses
 github.com/pivotal-cf/brokerapi/v7/handlers
 github.com/pivotal-cf/brokerapi/v7/middlewares
 github.com/pivotal-cf/brokerapi/v7/utils
-# github.com/pivotal-cf/on-demand-services-sdk v0.40.1-0.20200916152143-812ef1f3436b
+# github.com/pivotal-cf/on-demand-services-sdk v0.40.1-0.20210308102134-1c1127ce17c0
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
 # github.com/pkg/errors v0.9.1
