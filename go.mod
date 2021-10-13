@@ -14,7 +14,7 @@ require (
 	github.com/onsi/gomega v1.16.0
 	github.com/pborman/uuid v1.2.1
 	github.com/pivotal-cf/brokerapi/v8 v8.2.0 // indirect
-	github.com/pivotal-cf/on-demand-services-sdk v0.42.2-0.20210920105913-f2092d41236f
+	github.com/pivotal-cf/on-demand-services-sdk v0.42.3-0.20211013134126-156d8f5b53f2
 	github.com/pkg/errors v0.9.1
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
 	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b // indirect
