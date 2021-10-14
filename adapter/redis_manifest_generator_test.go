@@ -16,7 +16,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Redis Service Adapter", func() {
@@ -809,7 +809,6 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
 				removePlanSecret(generated.Manifest)
-				fixupMapKeyTypes(expectedManifest.InstanceGroups[0].Jobs[0].Properties)
 				Expect(generated.Manifest).To(Equal(expectedManifest))
 			})
 
@@ -825,7 +824,6 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
 				removePlanSecret(generated.Manifest)
-				fixupMapKeyTypes(expectedManifest.InstanceGroups[0].Jobs[0].Properties)
 				Expect(generated.Manifest).To(Equal(expectedManifest))
 			})
 
@@ -845,7 +843,6 @@ var _ = Describe("Redis Service Adapter", func() {
 				Expect(err).NotTo(HaveOccurred(), "Generated manifest not marshaled to yaml")
 
 				removePlanSecret(generated.Manifest)
-				fixupMapKeyTypes(expectedManifest.InstanceGroups[0].Jobs[0].Properties)
 				Expect(generated.Manifest).To(Equal(expectedManifest))
 			})
 
@@ -1209,25 +1206,4 @@ func containsJobName(list []bosh.Job, query string) bool {
 
 func removePlanSecret(manifest bosh.BoshManifest) {
 	delete(manifest.InstanceGroups[0].Jobs[0].Properties["redis"].(map[interface{}]interface{}), "plan_secret")
-}
-
-// fixupMapKeyTypes iterates over the input and converts map[string]interface{} into map[interface{}]interface{}
-// This is because the YAML parser detects maps where all the keys are strings and creates the map[string]interface{}
-// Go type, but this breaks the tests.
-func fixupMapKeyTypes(m map[string]interface{}) {
-	for k, v := range m {
-		switch t := v.(type) {
-		case map[string]interface{}:
-			m[k] = convertMap(t)
-		}
-	}
-}
-
-func convertMap(m map[string]interface{}) map[interface{}]interface{} {
-	r := make(map[interface{}]interface{})
-	for k, v := range m {
-		r[k] = v
-	}
-
-	return r
 }
