@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.27.1
+	github.com/onsi/gomega v1.27.2
 	github.com/pborman/uuid v1.2.1
 	github.com/pivotal-cf/on-demand-services-sdk v0.42.8-0.20230220121613-9d4c9233f302
 	github.com/pkg/errors v0.9.1
@@ -24,7 +24,7 @@ require (
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/tools v0.5.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
