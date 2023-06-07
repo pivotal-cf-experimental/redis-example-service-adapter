@@ -91,7 +91,7 @@ github.com/pborman/uuid
 # github.com/pivotal-cf/brokerapi/v10 v10.0.0
 ## explicit; go 1.19
 github.com/pivotal-cf/brokerapi/v10/domain
-# github.com/pivotal-cf/on-demand-services-sdk v0.43.2-0.20230605125837-4125cd68ee60
+# github.com/pivotal-cf/on-demand-services-sdk v0.43.2-0.20230607125837-df65f6797272
 ## explicit; go 1.20
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
@@ -129,7 +129,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.9.2
+# golang.org/x/tools v0.9.3
 ## explicit; go 1.18
 golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/internal/typeparams
