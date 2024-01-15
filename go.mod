@@ -6,7 +6,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.30.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240115121818-3e77a3d9d390
+	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240115122012-f4e75cf691c6
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -23,11 +23,11 @@ require (
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pivotal-cf/brokerapi/v10 v10.1.1 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
