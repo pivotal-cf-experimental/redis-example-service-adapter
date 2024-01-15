@@ -14,7 +14,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.16.0
+# github.com/go-playground/validator/v10 v10.17.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 # github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572
@@ -91,7 +91,7 @@ github.com/pborman/uuid
 # github.com/pivotal-cf/brokerapi/v10 v10.1.1
 ## explicit; go 1.20
 github.com/pivotal-cf/brokerapi/v10/domain
-# github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240112124621-6e1b5d5586d5
+# github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240115121818-3e77a3d9d390
 ## explicit; go 1.20
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
