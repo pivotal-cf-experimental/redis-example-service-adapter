@@ -4,9 +4,9 @@ go 1.19
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.30.0
+	github.com/onsi/gomega v1.31.1
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240206194040-f8cf46dc5c11
+	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240206194250-334facb85b43
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -22,7 +22,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/pivotal-cf/brokerapi/v10 v10.1.1 // indirect
+	github.com/pivotal-cf/brokerapi/v10 v10.2.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
