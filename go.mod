@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.31.1
+	github.com/onsi/gomega v1.32.0
 	github.com/pborman/uuid v1.2.1
 	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240319121343-df1f5f9ce898
 	github.com/pkg/errors v0.9.1
