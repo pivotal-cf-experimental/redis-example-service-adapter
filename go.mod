@@ -1,12 +1,14 @@
 module github.com/pivotal-cf-experimental/redis-example-service-adapter
 
-go 1.19
+go 1.21
+
+toolchain go1.22.2
 
 require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.32.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.45.4-0.20240325125323-fc73f3e8a4fb
+	github.com/pivotal-cf/on-demand-services-sdk v0.45.5-0.20240412212149-512df882a3a1
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -22,7 +24,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/pivotal-cf/brokerapi/v10 v10.2.0 // indirect
+	github.com/pivotal-cf/brokerapi/v11 v11.0.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
