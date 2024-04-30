@@ -14,7 +14,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.19.0
+# github.com/go-playground/validator/v10 v10.20.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 # github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572
@@ -72,7 +72,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.33.0
+# github.com/onsi/gomega v1.33.1
 ## explicit; go 1.20
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -92,7 +92,7 @@ github.com/pborman/uuid
 # github.com/pivotal-cf/brokerapi/v11 v11.0.0
 ## explicit; go 1.21
 github.com/pivotal-cf/brokerapi/v11/domain
-# github.com/pivotal-cf/on-demand-services-sdk v0.45.5-0.20240429120911-886747ec681f
+# github.com/pivotal-cf/on-demand-services-sdk v0.45.5-0.20240430123356-805e1407dbf3
 ## explicit; go 1.21
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
