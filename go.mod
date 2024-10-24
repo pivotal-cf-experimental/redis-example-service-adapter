@@ -8,7 +8,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.34.2
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.46.1-0.20241010123647-cda87d815e06
+	github.com/pivotal-cf/on-demand-services-sdk v0.46.1-0.20241024121929-97a371884bf9
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -24,7 +24,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/pivotal-cf/brokerapi/v11 v11.0.10 // indirect
+	github.com/pivotal-cf/brokerapi/v11 v11.0.11 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
