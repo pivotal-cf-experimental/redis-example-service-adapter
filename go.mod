@@ -1,14 +1,14 @@
 module github.com/pivotal-cf-experimental/redis-example-service-adapter
 
-go 1.22.0
+go 1.23
 
-toolchain go1.23.1
+toolchain go1.23.3
 
 require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.36.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241126120439-aaaf914a1263
+	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241204205722-f2a20958191f
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )

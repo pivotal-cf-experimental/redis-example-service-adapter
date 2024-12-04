@@ -93,8 +93,8 @@ github.com/pborman/uuid
 # github.com/pivotal-cf/brokerapi/v11 v11.0.14
 ## explicit; go 1.21
 github.com/pivotal-cf/brokerapi/v11/domain
-# github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241126120439-aaaf914a1263
-## explicit; go 1.22.0
+# github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241204205722-f2a20958191f
+## explicit; go 1.23
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
 # github.com/pkg/errors v0.9.1
