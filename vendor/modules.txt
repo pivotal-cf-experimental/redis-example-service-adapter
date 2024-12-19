@@ -93,7 +93,7 @@ github.com/pborman/uuid
 # github.com/pivotal-cf/brokerapi/v11 v11.0.16
 ## explicit; go 1.22.1
 github.com/pivotal-cf/brokerapi/v11/domain
-# github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241212122438-8b26e7df97da
+# github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241219125616-6de2e19abccf
 ## explicit; go 1.23
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
@@ -103,7 +103,7 @@ github.com/pkg/errors
 # golang.org/x/crypto v0.31.0
 ## explicit; go 1.20
 golang.org/x/crypto/sha3
-# golang.org/x/net v0.30.0
+# golang.org/x/net v0.32.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -131,7 +131,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.26.0
+# golang.org/x/tools v0.28.0
 ## explicit; go 1.22.0
 golang.org/x/tools/go/ast/inspector
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
