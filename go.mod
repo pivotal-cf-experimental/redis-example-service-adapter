@@ -6,9 +6,9 @@ toolchain go1.23.3
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.36.1
+	github.com/onsi/gomega v1.36.2
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241220130212-0b4ac02d6f42
+	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241224125544-f4e647c71348
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -26,7 +26,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pivotal-cf/brokerapi/v11 v11.0.16 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
