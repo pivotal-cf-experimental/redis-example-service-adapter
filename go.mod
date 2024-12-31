@@ -8,7 +8,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.36.2
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241224125544-f4e647c71348
+	github.com/pivotal-cf/on-demand-services-sdk v0.47.1-0.20241231122720-98a5af5bd1e4
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
