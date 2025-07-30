@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/brokerapi/v13 v13.0.4
+# code.cloudfoundry.org/brokerapi/v13 v13.0.5
 ## explicit; go 1.23.0
 code.cloudfoundry.org/brokerapi/v13/domain
 # github.com/fsnotify/fsnotify v1.4.9
@@ -93,7 +93,7 @@ github.com/onsi/gomega/types
 # github.com/pborman/uuid v1.2.1
 ## explicit
 github.com/pborman/uuid
-# github.com/pivotal-cf/on-demand-services-sdk v0.49.1-0.20250723121743-dfaec362336f
+# github.com/pivotal-cf/on-demand-services-sdk v0.49.2-0.20250730125208-f1d4dbc34c43
 ## explicit; go 1.23.0
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
