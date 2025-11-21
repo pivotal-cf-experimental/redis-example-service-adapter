@@ -1,5 +1,5 @@
-# code.cloudfoundry.org/brokerapi/v13 v13.0.7
-## explicit; go 1.23.0
+# code.cloudfoundry.org/brokerapi/v13 v13.0.12
+## explicit; go 1.24.0
 code.cloudfoundry.org/brokerapi/v13/domain
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit; go 1.13
@@ -93,7 +93,7 @@ github.com/onsi/gomega/types
 # github.com/pborman/uuid v1.2.1
 ## explicit
 github.com/pborman/uuid
-# github.com/pivotal-cf/on-demand-services-sdk v0.49.5-0.20251028120229-4ccbe0b9b302
+# github.com/pivotal-cf/on-demand-services-sdk v0.49.6-0.20251121102003-686f634b9dab
 ## explicit; go 1.23.0
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
@@ -115,8 +115,8 @@ golang.org/x/net/html/charset
 ## explicit; go 1.23.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
-# golang.org/x/text v0.28.0
-## explicit; go 1.23.0
+# golang.org/x/text v0.29.0
+## explicit; go 1.24.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex

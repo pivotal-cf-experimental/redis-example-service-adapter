@@ -1,6 +1,6 @@
 module github.com/pivotal-cf-experimental/redis-example-service-adapter
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.3
 
@@ -8,13 +8,13 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.38.2
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.49.5-0.20251028120229-4ccbe0b9b302
+	github.com/pivotal-cf/on-demand-services-sdk v0.49.6-0.20251121102003-686f634b9dab
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	code.cloudfoundry.org/brokerapi/v13 v13.0.7 // indirect
+	code.cloudfoundry.org/brokerapi/v13 v13.0.12 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -29,7 +29,7 @@ require (
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
