@@ -51,7 +51,7 @@ func (b Binder) CreateBinding(params serviceadapter.CreateBindingParams) (servic
 			manifestSecret := field.Name
 			path, ok := redisPlanProperties(params.Manifest)[manifestSecret].(string) // ((/odb/....))
 			if !ok || path == "" {
-				err := fmt.Errorf("could not find path for " + manifestSecret)
+				err := fmt.Errorf("could not find path for %s", manifestSecret)
 				b.StderrLogger.Println(err.Error())
 				if field.Optional {
 					continue
