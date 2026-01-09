@@ -6,9 +6,9 @@ toolchain go1.24.3
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.38.3
+	github.com/onsi/gomega v1.39.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.50.1-0.20260109120839-01b39d80bf44
+	github.com/pivotal-cf/on-demand-services-sdk v0.50.1-0.20260109121544-fc912062d76e
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
