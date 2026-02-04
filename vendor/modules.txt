@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/brokerapi/v13 v13.0.17
+# code.cloudfoundry.org/brokerapi/v13 v13.0.18
 ## explicit; go 1.24.0
 code.cloudfoundry.org/brokerapi/v13/domain
 # github.com/fsnotify/fsnotify v1.4.9
