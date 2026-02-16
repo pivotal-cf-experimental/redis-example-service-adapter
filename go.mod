@@ -1,8 +1,6 @@
 module github.com/pivotal-cf-experimental/redis-example-service-adapter
 
-go 1.24.0
-
-toolchain go1.24.3
+go 1.25.0
 
 require (
 	github.com/onsi/ginkgo v1.16.5
@@ -14,7 +12,7 @@ require (
 )
 
 require (
-	code.cloudfoundry.org/brokerapi/v13 v13.0.18 // indirect
+	code.cloudfoundry.org/brokerapi/v13 v13.0.19 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
