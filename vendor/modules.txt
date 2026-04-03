@@ -96,7 +96,7 @@ github.com/onsi/gomega/types
 # github.com/pborman/uuid v1.2.1
 ## explicit
 github.com/pborman/uuid
-# github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260331120351-0e7fc5abbd6d
+# github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260403120327-1ebd6c4d8127
 ## explicit; go 1.25.0
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
@@ -109,7 +109,7 @@ go.yaml.in/yaml/v3
 # golang.org/x/crypto v0.49.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/sha3
-# golang.org/x/net v0.51.0
+# golang.org/x/net v0.52.0
 ## explicit; go 1.25.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -138,8 +138,8 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.42.0
-## explicit; go 1.24.0
+# golang.org/x/tools v0.43.0
+## explicit; go 1.25.0
 golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
