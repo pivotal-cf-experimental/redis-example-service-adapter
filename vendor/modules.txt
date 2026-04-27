@@ -96,7 +96,7 @@ github.com/onsi/gomega/types
 # github.com/pborman/uuid v1.2.1
 ## explicit
 github.com/pborman/uuid
-# github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260420134031-705ddf77c965
+# github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260427141512-5cbbaa9b2071
 ## explicit; go 1.25.0
 github.com/pivotal-cf/on-demand-services-sdk/bosh
 github.com/pivotal-cf/on-demand-services-sdk/serviceadapter
