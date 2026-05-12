@@ -6,13 +6,13 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.40.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260429120350-fafbf2601c9d
+	github.com/pivotal-cf/on-demand-services-sdk v0.50.2-0.20260512183017-adf51c20f0ae
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	code.cloudfoundry.org/brokerapi/v13 v13.0.23 // indirect
+	code.cloudfoundry.org/brokerapi/v13 v13.0.24 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
