@@ -4,9 +4,9 @@ go 1.25.0
 
 require (
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.41.0
+	github.com/onsi/gomega v1.42.0
 	github.com/pborman/uuid v1.2.1
-	github.com/pivotal-cf/on-demand-services-sdk v0.50.3-0.20260612120312-cac225f2b54f
+	github.com/pivotal-cf/on-demand-services-sdk v0.50.3-0.20260615120353-12ea52b622d2
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )
